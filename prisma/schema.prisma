@@ -1,0 +1,84 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model User {
+  id                String               @id @default(uuid())
+  username          String               @unique
+  password          String
+  securityCode      String               @default("")
+  role              String               @default("USER")
+  balance           Float                @default(0.00)
+  commissionBalance Float                @default(0.00)
+  inviteCode        String               @unique
+  parentId          String?
+  createdAt         DateTime             @default(now())
+  orders            Order[]
+  transactions      TransactionHistory[]
+}
+
+model Product {
+  id          String             @id @default(uuid())
+  title       String
+  description String
+  image       String
+  price       Float
+  agentPrice  Float
+  status      Boolean            @default(true)
+  createdAt   DateTime           @default(now())
+  configs     AgentPriceConfig[]
+  orders      Order[]
+}
+
+model AgentPriceConfig {
+  id          String  @id @default(uuid())
+  agentId     String
+  subAgentId  String
+  productId   String
+  customPrice Float
+  product     Product @relation(fields: [productId], references: [id])
+}
+
+model Order {
+  id            String               @id @default(uuid())
+  orderNo       String               @unique
+  userId        String
+  productId     String
+  amount        Float
+  status        String               @default("PENDING")
+  paymentMethod String
+  createdAt     DateTime             @default(now())
+  user          User                 @relation(fields: [userId], references: [id])
+  product       Product              @relation(fields: [productId], references: [id])
+  transactions  TransactionHistory[]
+}
+
+model TransactionHistory {
+  id         String   @id @default(uuid())
+  userId     String
+  orderId    String?
+  type       String
+  walletType String
+  amount     Float
+  remark     String
+  createdAt  DateTime @default(now())
+  user       User     @relation(fields: [userId], references: [id])
+  order      Order?   @relation(fields: [orderId], references: [id])
+}
+
+model PaymentConfig {
+  id         String   @id @default(uuid())
+  platform   String
+  merchantId String
+  apiKey     String
+  secretKey  String
+  notifyUrl  String
+  status     Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
