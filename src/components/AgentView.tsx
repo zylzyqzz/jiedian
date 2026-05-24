@@ -39,7 +39,7 @@ export default function AgentView({ token }: AgentViewProps) {
   useEffect(() => {
     fetchAgent();
     fetch('/api/settings').then(r => r.json()).then(d => {
-      if (d.success && d.data.rebateRate) setRebateRate(d.data.rebateRate);
+      if (d.success && d.data.agentRebateRate) setRebateRate(d.data.agentRebateRate);
     }).catch(() => {});
   }, [fetchAgent]);
 

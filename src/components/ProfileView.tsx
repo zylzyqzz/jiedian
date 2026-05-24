@@ -86,8 +86,10 @@ export default function ProfileView({ user, token }: ProfileViewProps) {
   // 获取返佣比例用于邀请链接展示
   useEffect(() => {
     fetch('/api/settings').then(r => r.json()).then(d => {
-      if (d.success && d.data.rebateRate) setRebateRate(d.data.rebateRate);
       if (d.success && d.data.withdrawMin) setWithdrawMin(d.data.withdrawMin);
+      // 根据自身角色读取返佣比例
+      const rateKey = user.role === 'AGENT' ? 'agentRebateRate' : 'userRebateRate';
+      if (d.success && d.data[rateKey]) setRebateRate(d.data[rateKey]);
     }).catch(() => {});
   }, []);
 

@@ -108,8 +108,10 @@ export async function POST(request: Request) {
         if (user.parentId) {
           const parent = await tx.user.findUnique({ where: { id: user.parentId } });
           if (parent) {
-            const rebateSetting = await tx.siteSetting.findUnique({ where: { key: 'rebateRate' } });
-            const rebateRate = (parseFloat(rebateSetting?.value || '20')) / 100;
+            // 根据上级角色读取对应返佣比例
+            const rateKey = parent.role === 'AGENT' ? 'agentRebateRate' : 'userRebateRate';
+            const rebateSetting = await tx.siteSetting.findUnique({ where: { key: rateKey } });
+            const rebateRate = (parseFloat(rebateSetting?.value || (parent.role === 'AGENT' ? '20' : '10'))) / 100;
             const commission = finalPrice * rebateRate;
             await tx.user.update({
               where: { id: parent.id },
