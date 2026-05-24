@@ -56,8 +56,8 @@ export const agentSetPriceSchema = z.object({
 /* ========== 订单 ========== */
 export const createOrderSchema = z.object({
   productId: z.string().uuid('无效的商品ID'),
-  paymentMethod: z.string().default('alipay'),
-  paymentType: z.string().optional(),
+  paymentMethod: z.string().optional(),
+  paymentType: z.enum(['alipay', 'wxpay', 'sandbox', 'balance']).default('alipay'),
 });
 
 /* ========== 支付配置 ========== */

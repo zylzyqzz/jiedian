@@ -12,6 +12,12 @@ const api = (token: string) => ({
   headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
 });
 
+const PAY_METHODS = [
+  { key: 'alipay', label: '支付宝', icon: '🔵', desc: '支持扫码/网页支付' },
+  { key: 'wxpay', label: '微信支付', icon: '🟢', desc: '支持扫码/JSAPI' },
+  { key: 'sandbox', label: '模拟支付', icon: '🟡', desc: '演示用，免真实付费' },
+];
+
 export default function HomeView({ user, token, onViewChange }: HomeViewProps) {
   const [products, setProducts] = useState<Product[]>([]);
   const [orders, setOrders] = useState<OrderItem[]>([]);
@@ -21,6 +27,10 @@ export default function HomeView({ user, token, onViewChange }: HomeViewProps) {
   const [orderErr, setOrderErr] = useState('');
   const [loading, setLoading] = useState(false);
   const [assignedNode, setAssignedNode] = useState<any>(null);
+
+  /* ---- 支付方式选择 ---- */
+  const [showPaySelect, setShowPaySelect] = useState(false);
+  const [pendingProductId, setPendingProductId] = useState('');
 
   const fetchProducts = useCallback(async () => {
     const res = await fetch('/api/products');
@@ -39,7 +49,7 @@ export default function HomeView({ user, token, onViewChange }: HomeViewProps) {
     fetchOrders();
   }, [fetchProducts, fetchOrders]);
 
-  const handleOrder = async (productId: string) => {
+  const handleOrder = async (productId: string, paymentType: string) => {
     setOrderErr('');
     setOrderMsg('');
     setLoading(true);
@@ -48,7 +58,7 @@ export default function HomeView({ user, token, onViewChange }: HomeViewProps) {
       const res = await fetch('/api/orders', {
         method: 'POST',
         ...api(token),
-        body: JSON.stringify({ productId }),
+        body: JSON.stringify({ productId, paymentType }),
       });
       const d = await res.json();
       if (!d.success) { setOrderErr(d.error); setPayModal(true); return; }
@@ -57,11 +67,9 @@ export default function HomeView({ user, token, onViewChange }: HomeViewProps) {
         setOrderMsg(`正在跳转支付...订单号: ${d.data.orderNo}`);
         window.open(d.data.paymentUrl, '_blank');
       } else {
-        // 余额直扣 + 节点自动分配
+        // 余额直扣 / 模拟支付
         setOrderMsg(`购买成功！订单号: ${d.data.orderNo}`);
-        if (d.data.node) {
-          setAssignedNode(d.data.node);
-        }
+        if (d.data.node) setAssignedNode(d.data.node);
       }
       fetchOrders();
       setPayModal(true);
@@ -71,6 +79,11 @@ export default function HomeView({ user, token, onViewChange }: HomeViewProps) {
     } finally {
       setLoading(false);
     }
+  };
+
+  const openPaySelect = (productId: string) => {
+    setPendingProductId(productId);
+    setShowPaySelect(true);
   };
 
   const statusLabel: Record<string, string> = { PENDING: '待支付', PAID: '已支付', COMPLETED: '已完成' };
@@ -130,7 +143,7 @@ export default function HomeView({ user, token, onViewChange }: HomeViewProps) {
               <div className="flex justify-between items-center mt-auto">
                 <span className="text-lg font-mono font-bold">￥{p.price}</span>
                 <button
-                  onClick={() => handleOrder(p.id)}
+                  onClick={() => openPaySelect(p.id)}
                   disabled={loading}
                   className="bg-white text-black hover:bg-neutral-200 transition px-4 py-2 rounded-xl text-xs font-semibold disabled:opacity-50"
                 >
@@ -139,6 +152,46 @@ export default function HomeView({ user, token, onViewChange }: HomeViewProps) {
               </div>
             </div>
           ))}
+        </div>
+      )}
+
+      {/* 支付方式选择弹窗 */}
+      {showPaySelect && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
+          <div className="bg-[#0A0A0A] border border-white/10 w-full max-w-sm rounded-2xl p-6 shadow-2xl space-y-4">
+            <div className="flex justify-between items-center">
+              <h3 className="text-sm font-bold">选择支付方式</h3>
+              <button onClick={() => setShowPaySelect(false)} className="text-neutral-500 hover:text-white text-lg">&times;</button>
+            </div>
+
+            {(user.role === 'AGENT' || user.role === 'SUB_AGENT') ? (
+              <div className="space-y-2">
+                <p className="text-[10px] text-neutral-400">代理/子代理使用余额直扣，无需选择支付方式</p>
+                <button
+                  onClick={() => { setShowPaySelect(false); handleOrder(pendingProductId, 'balance'); }}
+                  className="w-full bg-white text-black py-3 rounded-xl text-sm font-semibold hover:bg-neutral-200 transition"
+                >
+                  💰 余额支付（￥{products.find(p => p.id === pendingProductId)?.price || 0}）
+                </button>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {PAY_METHODS.map(m => (
+                  <button
+                    key={m.key}
+                    onClick={() => { setShowPaySelect(false); handleOrder(pendingProductId, m.key); }}
+                    className="w-full bg-black border border-white/10 rounded-xl p-3 flex items-center gap-3 hover:border-white/30 transition text-left"
+                  >
+                    <span className="text-2xl">{m.icon}</span>
+                    <div>
+                      <div className="text-sm font-semibold">{m.label}</div>
+                      <div className="text-[10px] text-neutral-500">{m.desc}</div>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       )}
 
@@ -198,27 +251,19 @@ export default function HomeView({ user, token, onViewChange }: HomeViewProps) {
                       `协议: ${assignedNode.protocol}\n地址: ${assignedNode.host}\n端口: ${assignedNode.port}\n密码: ${assignedNode.password}`
                     );
                   }}
-                  className="w-full bg-blue-500/20 text-blue-300 py-1.5 rounded-lg text-[10px] hover:bg-blue-500/30 transition mt-2"
+                  className="mt-2 w-full bg-neutral-800 border border-white/10 text-white rounded-lg py-2 text-[10px] hover:bg-neutral-700 transition"
                 >
-                  复制连接信息
+                  📋 一键复制连接信息
                 </button>
               </div>
             )}
 
             <button
-              onClick={() => { setPayModal(false); fetchOrders(); }}
-              className="w-full bg-white text-black py-2 rounded-xl text-xs font-semibold hover:bg-neutral-200 transition"
+              onClick={() => setPayModal(false)}
+              className="mt-2 bg-white text-black px-6 py-2 rounded-xl text-xs font-semibold hover:bg-neutral-200 transition"
             >
               确定
             </button>
-            {assignedNode && (
-              <button
-                onClick={() => { setPayModal(false); onViewChange('services'); }}
-                className="w-full text-[10px] text-blue-400 hover:text-blue-300 transition"
-              >
-                前往「我的服务」查看全部节点 →
-              </button>
-            )}
           </div>
         </div>
       )}

@@ -156,10 +156,59 @@ export async function POST(request: Request) {
       });
     }
 
-    /* ---- 普通用户：第三方支付 ---- */
+    /* ---- 普通用户：模拟支付（沙箱模式） ---- */
+    const pt = paymentType || 'alipay';
+    if (pt === 'sandbox') {
+      const orderId = uuidv4();
+      const orderNo = `NODE-${Date.now()}-${orderId.slice(0, 8)}`;
+
+      const order = await prisma.order.create({
+        data: {
+          orderNo,
+          userId: session.userId,
+          productId,
+          amount: finalPrice,
+          status: 'PAID',
+          paymentMethod: 'sandbox',
+        },
+      });
+
+      await prisma.transactionHistory.create({
+        data: {
+          userId: session.userId,
+          orderId: order.id,
+          type: 'PURCHASE',
+          walletType: 'BALANCE',
+          amount: finalPrice,
+          remark: `模拟支付成功：${orderNo}`,
+        },
+      });
+
+      const node = await autoAssignNode(productId, order.id, session.userId);
+
+      return NextResponse.json({
+        success: true,
+        data: {
+          orderNo,
+          status: 'PAID',
+          payType: 'sandbox',
+          node: node ? {
+            id: node.id,
+            host: node.host,
+            port: node.port,
+            protocol: node.protocol,
+            password: node.password,
+            expireAt: node.expireAt,
+            productTitle: product.title,
+          } : null,
+        },
+      });
+    }
+
+    /* ---- 普通用户：第三方支付（支付宝 / 微信） ---- */
     const payCfg = await prisma.paymentConfig.findFirst({ where: { status: true } });
     if (!payCfg) {
-      return NextResponse.json({ success: false, error: '支付通道未配置' }, { status: 500 });
+      return NextResponse.json({ success: false, error: '支付通道未配置，请联系管理员' }, { status: 500 });
     }
 
     const orderId = uuidv4();
@@ -171,7 +220,7 @@ export async function POST(request: Request) {
         productId,
         amount: finalPrice,
         status: 'PENDING',
-        paymentMethod: paymentMethod || paymentType || 'alipay',
+        paymentMethod: pt,
       },
     });
 
@@ -180,9 +229,12 @@ export async function POST(request: Request) {
     const notifyUrl = `${baseUrl}/api/pay-callback`;
     const returnUrl = `${baseUrl}/pay-success`;
 
+    // 支付类型映射：确保网关识别
+    const gatewayType = pt === 'wxpay' ? 'wxpay' : 'alipay';
+
     const params: Record<string, string | number> = {
       pid: payCfg.merchantId,
-      type: paymentType || 'alipay',
+      type: gatewayType,
       out_trade_no: orderNo,
       notify_url: notifyUrl,
       return_url: returnUrl,
