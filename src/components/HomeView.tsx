@@ -34,6 +34,8 @@ export default function HomeView({ user, token, onViewChange }: HomeViewProps) {
   const [loading, setLoading] = useState(false);
   const [assignedNode, setAssignedNode] = useState<any>(null);
   const gridRef = useRef<HTMLDivElement>(null);
+  const [showDetail, setShowDetail] = useState(false);
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
 
   /* ---- 支付方式选择 ---- */
   const [showPaySelect, setShowPaySelect] = useState(false);
@@ -111,6 +113,12 @@ export default function HomeView({ user, token, onViewChange }: HomeViewProps) {
     setShowPaySelect(true);
   };
 
+  const openDetail = (product: Product) => {
+    setSelectedProduct(product);
+    setShowDetail(true);
+  };
+
+  /* ---- 商品详情弹窗 ---- */
   const statusLabel: Record<string, string> = { PENDING: '待支付', PAID: '已支付', COMPLETED: '已完成' };
 
   return (
@@ -123,20 +131,10 @@ export default function HomeView({ user, token, onViewChange }: HomeViewProps) {
         .hover-glow:hover { box-shadow: 0 0 30px -8px rgba(255,255,255,.08); }
       `}</style>
 
-      {/* 欢迎横幅 */}
-      <div className="card-reveal bg-gradient-to-br from-[#111] to-[#0A0A0A] border border-white/5 rounded-2xl p-6 mb-8">
-        <h2 className="text-xl font-bold mb-1">欢迎，{user.username}</h2>
-        <div className="flex flex-wrap gap-4 text-sm text-neutral-400">
-          <span>余额：<span className="text-white font-mono">￥{user.balance.toFixed(2)}</span></span>
-          <span>佣金：<span className="text-emerald-400 font-mono">￥{user.commissionBalance.toFixed(2)}</span></span>
-          <span>邀请码：<span className="text-blue-400 font-mono">{user.inviteCode}</span></span>
-        </div>
-        <button
-          onClick={() => onViewChange('services')}
-          className="mt-4 bg-blue-500/10 border border-blue-500/20 text-blue-400 px-4 py-2 rounded-xl text-xs font-semibold hover:bg-blue-500/20 transition-all duration-300 active:scale-95 inline-flex items-center gap-2"
-        >
-          <span>📡</span> 我的节点服务
-        </button>
+      {/* 页面标题 */}
+      <div className="card-reveal mb-6">
+        <h2 className="text-xl font-bold">节点商店</h2>
+        <p className="text-xs text-neutral-500 mt-1">选购适合你的节点服务</p>
       </div>
 
       {/* Tab 切换 */}
@@ -183,7 +181,8 @@ export default function HomeView({ user, token, onViewChange }: HomeViewProps) {
             {products.map((p, i) => (
               <div
                 key={p.id}
-                className="group card-reveal bg-[#0A0A0A] border border-white/5 rounded-2xl flex flex-col overflow-hidden transition-all duration-500 hover:border-white/20 hover-glow"
+                onClick={() => openDetail(p)}
+                className="group card-reveal bg-[#0A0A0A] border border-white/5 rounded-2xl flex flex-col overflow-hidden transition-all duration-500 hover:border-white/20 hover-glow cursor-pointer"
                 style={{ animation: `fadeInUp .5s ease ${i * 0.06}s both` }}
               >
                 {/* 图片区域 */}
@@ -214,7 +213,7 @@ export default function HomeView({ user, token, onViewChange }: HomeViewProps) {
                   <div className="flex justify-between items-center pt-2 border-t border-white/5 mt-auto">
                     <span className="text-lg font-mono font-bold transition-all duration-300 group-hover:text-emerald-400">￥{p.price}</span>
                     <button
-                      onClick={() => openPaySelect(p.id)}
+                      onClick={(e) => { e.stopPropagation(); openPaySelect(p.id); }}
                       disabled={loading}
                       className="bg-white text-black hover:bg-neutral-200 transition-all duration-300 px-4 py-2 rounded-xl text-xs font-semibold disabled:opacity-50 active:scale-90"
                     >
@@ -224,6 +223,81 @@ export default function HomeView({ user, token, onViewChange }: HomeViewProps) {
                 </div>
               </div>
             ))}
+          </div>
+        </div>
+      )}
+
+      {/* 商品详情弹窗 */}
+      {showDetail && selectedProduct && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4"
+          onClick={() => setShowDetail(false)}>
+          <div className="card-reveal revealed bg-[#0A0A0A] border border-white/10 w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden"
+            onClick={e => e.stopPropagation()}>
+            {/* 大图 */}
+            <div className="relative h-56 bg-neutral-900">
+              {selectedProduct.image ? (
+                <img src={selectedProduct.image} alt={selectedProduct.title}
+                  className="w-full h-full object-cover" />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center text-neutral-600 text-4xl">📡</div>
+              )}
+              <div className="absolute inset-0 bg-gradient-to-t from-[#0A0A0A] via-transparent to-transparent" />
+              {/* 分类标签 */}
+              <span className={`absolute top-3 left-3 text-[10px] px-2 py-0.5 rounded-full font-semibold backdrop-blur-[4px] ${
+                selectedProduct.category === 'LIVE'
+                  ? 'bg-red-500/20 text-red-400 border border-red-500/30'
+                  : 'bg-blue-500/20 text-blue-400 border border-blue-500/30'
+              }`}>
+                {selectedProduct.category === 'LIVE' ? '📡 直播专线' : '🌐 非直播专线'}
+              </span>
+              {/* 关闭按钮 */}
+              <button
+                onClick={() => setShowDetail(false)}
+                className="absolute top-3 right-3 w-8 h-8 rounded-full bg-black/50 text-white/80 flex items-center justify-center hover:bg-black/80 hover:text-white transition-all text-lg"
+              >
+                &times;
+              </button>
+            </div>
+
+            {/* 详情内容 */}
+            <div className="p-6 space-y-5">
+              <div>
+                <h2 className="text-xl font-bold text-white">{selectedProduct.title}</h2>
+                <p className="text-sm text-neutral-400 leading-relaxed mt-3">
+                  {selectedProduct.description}
+                </p>
+              </div>
+
+              {/* 节点信息概要 */}
+              <div className="bg-black border border-white/5 rounded-xl p-4 space-y-2">
+                <div className="flex justify-between text-[11px]">
+                  <span className="text-neutral-500">协议支持</span>
+                  <span className="text-white">Trojan / VMess</span>
+                </div>
+                <div className="flex justify-between text-[11px]">
+                  <span className="text-neutral-500">流量限额</span>
+                  <span className="text-white">500 GB / 月</span>
+                </div>
+                <div className="flex justify-between text-[11px]">
+                  <span className="text-neutral-500">带宽</span>
+                  <span className="text-white">1 Gbps</span>
+                </div>
+              </div>
+
+              {/* 价格 + 购买 */}
+              <div className="flex justify-between items-center pt-4 border-t border-white/10">
+                <div>
+                  <div className="text-[10px] text-neutral-500 mb-1">价格</div>
+                  <span className="text-2xl font-mono font-bold text-emerald-400">￥{selectedProduct.price}</span>
+                </div>
+                <button
+                  onClick={() => { setShowDetail(false); setTimeout(() => openPaySelect(selectedProduct.id), 200); }}
+                  className="bg-white text-black hover:bg-neutral-200 transition-all duration-300 px-6 py-3 rounded-xl text-sm font-semibold active:scale-90"
+                >
+                  立即购买
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}

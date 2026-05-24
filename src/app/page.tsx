@@ -7,7 +7,7 @@ import HomeView from '@/components/HomeView';
 import ProfileView from '@/components/ProfileView';
 import AdminView from '@/components/AdminView';
 import AgentView from '@/components/AgentView';
-import ServicesView from '@/components/ServicesView';
+// ServicesView 已合并到 ProfileView
 
 const TOKEN_KEY = 'nodehub_token';
 const USER_KEY = 'nodehub_user';
@@ -94,9 +94,6 @@ export default function App() {
         <AgentView token={token} />
       )}
 
-      {view === 'services' && user && token && (
-        <ServicesView token={token} />
-      )}
     </div>
   );
 }

@@ -29,9 +29,7 @@ export default function NavBar({ user, token, onViewChange, onLogout }: NavBarPr
       <div className="flex items-center gap-2 sm:gap-3 text-[10px] sm:text-xs">
         {token && user ? (
           <>
-            <button onClick={() => onViewChange('services')} className="text-blue-400 hover:text-blue-300 transition hidden sm:inline">
-              我的服务
-            </button>
+
             <button onClick={() => onViewChange('profile')} className="text-neutral-400 hover:text-white transition">
               个人中心
             </button>
