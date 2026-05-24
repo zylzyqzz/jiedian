@@ -199,7 +199,9 @@ export async function POST(request: Request) {
             where: { id: userId },
             data: { role: 'SUB_AGENT' },
           });
-          const reward = amount * 0.25;
+          const recruitSetting = await prisma.siteSetting.findUnique({ where: { key: 'recruitRate' } });
+          const recruitRate = (parseFloat(recruitSetting?.value || '25')) / 100;
+          const reward = amount * recruitRate;
           await prisma.user.update({
             where: { id: parent.id },
             data: { commissionBalance: { increment: reward } },
@@ -210,7 +212,7 @@ export async function POST(request: Request) {
               type: 'AGENT_REWARD',
               walletType: 'COMMISSION',
               amount: reward,
-              remark: `招商奖励：${user.username} 充值升级，25% 返佣 ￥${reward.toFixed(2)}`,
+              remark: `招商奖励（${(recruitRate * 100).toFixed(0)}%）：${user.username} 充值升级，返佣 ￥${reward.toFixed(2)}`,
             },
           });
         }

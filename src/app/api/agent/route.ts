@@ -96,6 +96,13 @@ export async function POST(request: Request) {
         return NextResponse.json({ success: false, error: '可提现佣金不足' }, { status: 400 });
       }
 
+      // 最低提现门槛
+      const minSetting = await prisma.siteSetting.findUnique({ where: { key: 'withdrawMin' } });
+      const withdrawMin = parseFloat(minSetting?.value || '100');
+      if (amount < withdrawMin) {
+        return NextResponse.json({ success: false, error: `最低提现金额为 ￥${withdrawMin}` }, { status: 400 });
+      }
+
       await prisma.$transaction([
         prisma.user.update({
           where: { id: session.userId },

@@ -169,6 +169,9 @@ async function main() {
     { key: 'siteIntro', value: '全栈代理分销管理系统，支持多级代理、节点自动分配、佣金自动结算。' },
     { key: 'siteName', value: 'NodeHub' },
     { key: 'footerText', value: '© 2026 NodeHub. All rights reserved.' },
+    { key: 'rebateRate', value: '20' },
+    { key: 'recruitRate', value: '25' },
+    { key: 'withdrawMin', value: '100' },
   ];
   for (const s of defaultSettings) {
     await prisma.siteSetting.upsert({

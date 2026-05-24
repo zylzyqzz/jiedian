@@ -113,7 +113,9 @@ export async function POST(request: Request) {
         if (user.role === 'SUB_AGENT' && user.parentId) {
           const parent = await tx.user.findUnique({ where: { id: user.parentId } });
           if (parent && parent.role === 'AGENT') {
-            const commission = finalPrice * 0.15;
+            const rebateSetting = await tx.siteSetting.findUnique({ where: { key: 'rebateRate' } });
+            const rebateRate = (parseFloat(rebateSetting?.value || '15')) / 100;
+            const commission = finalPrice * rebateRate;
             await tx.user.update({
               where: { id: parent.id },
               data: { commissionBalance: { increment: commission } },
@@ -125,7 +127,7 @@ export async function POST(request: Request) {
                 type: 'DISTRIBUTE_REBATE',
                 walletType: 'COMMISSION',
                 amount: commission,
-                remark: `分销返佣：子代理 ${user.username} 购买 ${product.title}`,
+                remark: `分销返佣（${(rebateRate * 100).toFixed(0)}%）：子代理 ${user.username} 购买 ${product.title}`,
               },
             });
           }

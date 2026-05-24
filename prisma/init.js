@@ -125,10 +125,29 @@ async function ensureProducts() {
   console.log('  \u2713 产品: ' + nodeSpecs.length + ' 个 / 新增节点: ' + nodeCount + ' 个');
 }
 
+async function ensureSettings() {
+  const defaults = [
+    { key: 'siteIntro', value: '全栈代理分销管理系统，支持多级代理、节点自动分配、佣金自动结算。' },
+    { key: 'siteName', value: 'NodeHub' },
+    { key: 'rebateRate', value: '20' },
+    { key: 'recruitRate', value: '25' },
+    { key: 'withdrawMin', value: '100' },
+  ];
+  for (const s of defaults) {
+    await prisma.siteSetting.upsert({
+      where: { key: s.key },
+      update: { value: s.value },
+      create: { key: s.key, value: s.value },
+    });
+  }
+  console.log('  \u2713 站点设置已就绪');
+}
+
 async function main() {
   console.log('\u{1F504} 检查数据库状态...');
   await ensureAdmin();
   await ensureProducts();
+  await ensureSettings();
   console.log('\u2705 初始化完成');
 }
 

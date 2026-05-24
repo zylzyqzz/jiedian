@@ -44,6 +44,7 @@ export default function ProfileView({ user, token }: ProfileViewProps) {
   const [txs, setTxs] = useState<TransactionItem[]>([]);
   const [services, setServices] = useState<NodeBrief[]>([]);
   const [refLink, setRefLink] = useState('');
+  const [rebateRate, setRebateRate] = useState('20');
   const [activeTab, setActiveTab] = useState<'orders' | 'tx' | 'services'>('services');
   const [expandedSvc, setExpandedSvc] = useState<number | null>(null);
   const [copyIdx, setCopyIdx] = useState<number | null>(null);
@@ -71,6 +72,13 @@ export default function ProfileView({ user, token }: ProfileViewProps) {
   }, [token]);
 
   useEffect(() => { fetchData(); }, [fetchData]);
+
+  // 获取返佣比例用于邀请链接展示
+  useEffect(() => {
+    fetch('/api/settings').then(r => r.json()).then(d => {
+      if (d.success && d.data.rebateRate) setRebateRate(d.data.rebateRate);
+    }).catch(() => {});
+  }, []);
 
   const handleChangePwd = async () => {
     setPwdErr(''); setPwdOk('');
@@ -116,7 +124,7 @@ export default function ProfileView({ user, token }: ProfileViewProps) {
                 <div>
                   <h2 className="text-base sm:text-lg font-bold">{user.username}</h2>
                   <p className="text-[10px] text-neutral-500 mt-0.5">
-                    邀请码：<span className="text-blue-400 font-mono">{user.inviteCode}</span>
+                    ID: {user.id.slice(0, 8)}...
                   </p>
                 </div>
               </div>
@@ -143,10 +151,14 @@ export default function ProfileView({ user, token }: ProfileViewProps) {
         {/* 邀请链接 */}
         {inviteUrl && (
           <div className="p-5 sm:p-6 bg-blue-500/5 border-t border-blue-500/10">
-            <div className="text-[10px] text-blue-400 mb-1.5">🔗 推荐链接（分享给新用户获得返佣）</div>
+            <div className="flex items-center gap-2 mb-2">
+              <span className="text-xs text-blue-400 font-medium">推荐链接</span>
+              <span className="text-[10px] text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded-full font-semibold">推荐奖励 {rebateRate}%</span>
+            </div>
+            <p className="text-[11px] text-neutral-500 mb-3">分享此链接，新用户注册并消费后，你将获得 {rebateRate}% 返佣</p>
             <div className="flex gap-2">
-              <code className="flex-1 bg-black rounded-lg px-3 py-2 text-[10px] sm:text-xs text-blue-300 font-mono truncate">{inviteUrl}</code>
-              <button onClick={() => copy(inviteUrl)} className="bg-blue-500/20 text-blue-300 px-3 py-1.5 rounded-lg text-[10px] hover:bg-blue-500/30 transition shrink-0">
+              <code className="flex-1 bg-black rounded-lg px-3 py-2 text-xs text-blue-300 font-mono truncate">{inviteUrl}</code>
+              <button onClick={() => copy(inviteUrl)} className="bg-blue-500/20 text-blue-300 px-3 py-1.5 rounded-lg text-xs hover:bg-blue-500/30 transition shrink-0">
                 复制
               </button>
             </div>
