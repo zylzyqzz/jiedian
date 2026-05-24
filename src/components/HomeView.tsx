@@ -37,6 +37,8 @@ export default function HomeView({ user, token, onViewChange }: HomeViewProps) {
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [siteIntro, setSiteIntro] = useState('');
   const [siteName, setSiteName] = useState('');
+  const [contactInfo, setContactInfo] = useState('');
+  const [showContact, setShowContact] = useState(false);
   const [showPaySelect, setShowPaySelect] = useState(false);
   const [pendingProductId, setPendingProductId] = useState('');
   const [category, setCategory] = useState<ProductCategory | 'ALL'>('ALL');
@@ -45,6 +47,7 @@ export default function HomeView({ user, token, onViewChange }: HomeViewProps) {
     fetch('/api/settings').then(r => r.json()).then(d => {
       if (d.success && d.data.siteIntro) setSiteIntro(d.data.siteIntro);
       if (d.success && d.data.siteName) setSiteName(d.data.siteName);
+      if (d.success && d.data.contactInfo) setContactInfo(d.data.contactInfo);
     }).catch(() => {});
   }, []);
 
@@ -350,10 +353,10 @@ export default function HomeView({ user, token, onViewChange }: HomeViewProps) {
                   </div>
                   <p className="text-xs text-neutral-500 mb-4">开通代理资格，长期有效</p>
                   <button
-                    onClick={() => onViewChange('profile')}
+                    onClick={() => setShowContact(true)}
                     className="px-8 py-3 bg-amber-500 hover:bg-amber-600 text-black rounded-xl text-base font-bold transition-all duration-200 active:scale-95 shadow-lg shadow-amber-500/20"
                   >
-                    立即加入
+                    联系客服加入
                   </button>
                 </div>
               </div>
@@ -523,6 +526,50 @@ export default function HomeView({ user, token, onViewChange }: HomeViewProps) {
                 确定
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* 客服联系弹窗 */}
+      {showContact && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-sm p-4"
+          onClick={() => setShowContact(false)}>
+          <div className="bg-[#0a0b0d] border border-white/[0.08] w-full max-w-md rounded-2xl p-8 shadow-2xl"
+            onClick={e => e.stopPropagation()}>
+            <div className="text-center mb-6">
+              <span className="text-4xl">💎</span>
+              <h3 className="text-xl font-bold text-white mt-3">代理加盟咨询</h3>
+              <p className="text-sm text-neutral-400 mt-2">请联系客服完成代理开通，享受专属权益</p>
+            </div>
+
+            <div className="bg-amber-500/5 border border-amber-500/10 rounded-xl p-5 mb-6">
+              <p className="text-xs text-amber-400 font-medium mb-2">📋 代理权益速览</p>
+              <div className="space-y-1.5 text-xs text-neutral-300">
+                <p>· 一次性充值 ¥3,000，全站 6 折拿货</p>
+                <p>· 独立代理后台，专属推荐链接</p>
+                <p>· 享 20% 推荐返佣，下级购买即返</p>
+                <p>· 7×24 专属客服，优先技术支持</p>
+              </div>
+            </div>
+
+            {contactInfo ? (
+              <div className="bg-white/[0.02] border border-white/[0.05] rounded-xl p-5 text-center">
+                <p className="text-sm text-neutral-300 font-medium mb-3">联系客服</p>
+                <p className="text-base text-white font-mono whitespace-pre-line">{contactInfo}</p>
+              </div>
+            ) : (
+              <div className="bg-white/[0.02] border border-white/[0.05] rounded-xl p-5 text-center">
+                <p className="text-sm text-neutral-400">客服联系方式暂未设置</p>
+                <p className="text-xs text-neutral-600 mt-1">请稍后再试</p>
+              </div>
+            )}
+
+            <button
+              onClick={() => setShowContact(false)}
+              className="mt-6 w-full py-2.5 bg-white text-black rounded-xl text-sm font-semibold hover:bg-neutral-100 transition-all duration-200"
+            >
+              确定
+            </button>
           </div>
         </div>
       )}

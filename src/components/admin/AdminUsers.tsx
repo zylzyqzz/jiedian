@@ -55,6 +55,12 @@ export default function AdminUsers({
     onRefresh();
   };
 
+  const handleRoleChange = async (userId: string, role: string) => {
+    if (!confirm(`确认将此用户角色改为「${roleLabel[role]}」？`)) return;
+    await fetch('/api/admin/users', { method: 'POST', ...api(token), body: JSON.stringify({ action: 'CHANGE_ROLE', userId, role }) });
+    onRefresh();
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap gap-2">
@@ -90,7 +96,17 @@ export default function AdminUsers({
                 </div>
                 <div className="text-[10px] text-neutral-600">{u.inviteCode} · {new Date(u.createdAt).toLocaleDateString()}</div>
               </div>
-              <div className="flex gap-1">
+              <div className="flex items-center gap-1">
+                <select
+                  value={u.role}
+                  onChange={e => handleRoleChange(u.id, e.target.value)}
+                  className="bg-black border border-white/10 rounded px-1.5 py-1 text-[10px] text-white appearance-none cursor-pointer hover:border-white/20"
+                >
+                  <option value="USER">用户</option>
+                  <option value="AGENT">代理</option>
+                  <option value="SUB_AGENT">子代理</option>
+                  <option value="ADMIN">管理员</option>
+                </select>
                 {u.status === 'ACTIVE' ? (
                   <button onClick={() => handleBan(u.id)} className="text-[10px] text-red-400 hover:text-red-300 bg-red-500/5 px-2 py-1 rounded">封禁</button>
                 ) : (
