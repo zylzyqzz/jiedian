@@ -16,12 +16,6 @@ export async function GET(request: Request) {
       return NextResponse.json({ success: false, error: '用户不存在' }, { status: 404 });
     }
 
-    // 子代理列表
-    const subAgents = await prisma.user.findMany({
-      where: { parentId: session.userId },
-      select: { id: true, username: true, role: true, status: true, createdAt: true },
-    });
-
     // 佣金流水
     const commissions = await prisma.transactionHistory.findMany({
       where: { userId: session.userId, walletType: 'COMMISSION' },
@@ -30,42 +24,13 @@ export async function GET(request: Request) {
       select: { id: true, amount: true, remark: true, createdAt: true },
     });
 
-    // 价格配置
-    const priceConfigs = await prisma.agentPriceConfig.findMany({
-      where: { agentId: session.userId },
-      include: { product: { select: { id: true, title: true, price: true } } },
-    });
-
-    // 团队统计
-    const teamOrders = await prisma.order.count({
-      where: {
-        user: { parentId: session.userId },
-        status: { in: ['PAID', 'COMPLETED'] },
-      },
-    });
-
-    const teamRevenue = await prisma.order.aggregate({
-      where: {
-        user: { parentId: session.userId },
-        status: { in: ['PAID', 'COMPLETED'] },
-      },
-      _sum: { amount: true },
-    });
-
     return NextResponse.json({
       success: true,
       data: {
         balance: user.balance,
         commissionBalance: user.commissionBalance,
         inviteCode: user.inviteCode,
-        subAgents,
         commissions,
-        priceConfigs,
-        teamStats: {
-          subAgentCount: subAgents.length,
-          teamOrders,
-          teamRevenue: teamRevenue._sum.amount || 0,
-        },
       },
     });
   } catch (err: any) {

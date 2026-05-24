@@ -246,6 +246,21 @@ export default function HomeView({ user, token, onViewChange }: HomeViewProps) {
 
                     <div className="flex items-end justify-between">
                       <div>
+                        {/* 代理查看代理价 */}
+                        {user.role === 'AGENT' && p.agentPrice > 0 ? (
+                          <div>
+                            <div className="flex items-baseline gap-2 mb-0.5">
+                              <span className="text-sm text-neutral-500 line-through">¥{p.price}</span>
+                              <span className="text-[10px] font-semibold text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded">代理价</span>
+                            </div>
+                            <div className="flex items-baseline gap-1">
+                              <span className="text-xs text-neutral-500">¥</span>
+                              <span className="text-3xl font-extrabold text-emerald-400 tracking-tight">{p.agentPrice}</span>
+                              <span className="text-sm text-neutral-500">/ 月</span>
+                            </div>
+                          </div>
+                        ) : (
+                          <>
                         {/* 原价 + 限时特价 */}
                         {p.originalPrice > 0 && p.originalPrice > p.price ? (
                           <>
@@ -271,6 +286,8 @@ export default function HomeView({ user, token, onViewChange }: HomeViewProps) {
                           <div className="text-xs text-neutral-500 mt-1">
                             代理价 <span className="text-neutral-300 font-medium">¥{p.agentPrice}</span>
                           </div>
+                        )}
+                          </> /* 闭合 else 块 */
                         )}
                       </div>
                       <button
