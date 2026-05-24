@@ -1,4 +1,4 @@
-// 首次部署自动初始化脚本 — 幂等，不重复写入
+// 部署自动初始化脚本 — 幂等，确保管理员/admin + 种子产品始终存在
 const { PrismaClient } = require('@prisma/client');
 const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
@@ -9,75 +9,34 @@ function genPassword(len = 16) {
   return crypto.randomBytes(len).toString('hex').slice(0, len);
 }
 
-async function main() {
-  const existingAdmin = await prisma.user.findFirst({ where: { role: 'ADMIN' } });
-  if (existingAdmin) {
-    console.log('✅ 数据库已初始化，跳过。');
-    return;
+const hash = (pw) => bcrypt.hashSync(pw, 10);
+
+async function ensureAdmin() {
+  const admin = await prisma.user.findFirst({ where: { role: 'ADMIN' } });
+  const hashed = hash('admin');
+  const hashedCode = hash('admin666');
+
+  if (!admin) {
+    await prisma.user.create({
+      data: {
+        username: 'admin', password: hashed, securityCode: hashedCode,
+        role: 'ADMIN', status: 'ACTIVE', balance: 0, commissionBalance: 0, inviteCode: 'ADMIN001',
+      },
+    });
+    console.log('  ✓ 管理员已创建: admin / admin');
+  } else if (admin.username !== 'admin' || admin.password !== hashed) {
+    await prisma.user.update({ where: { id: admin.id }, data: { username: 'admin', password: hashed } });
+    console.log('  ✓ 管理员已更新: admin / admin');
+  } else {
+    console.log('  ✓ 管理员已就绪: admin / admin');
   }
+}
 
-  console.log('🔄 首次部署，正在初始化种子数据...');
-  const hash = (pw) => bcrypt.hashSync(pw, 10);
+async function ensureProducts() {
+  const existing = await prisma.product.count();
+  if (existing >= 6) { console.log('  ✓ 产品已就绪'); return; }
 
-  // 管理员 — 密码 admin
-  const admin = await prisma.user.create({
-    data: {
-      username: 'admin',
-      password: hash('admin'),
-      securityCode: hash('admin666'),
-      role: 'ADMIN',
-      status: 'ACTIVE',
-      balance: 0,
-      commissionBalance: 0,
-      inviteCode: 'ADMIN001',
-    },
-  });
-  console.log('  ✓ 管理员: admin / admin');
-
-  // 一级代理
-  const agent = await prisma.user.create({
-    data: {
-      username: 'agent01',
-      password: hash('agent123'),
-      securityCode: hash('agent666'),
-      role: 'AGENT',
-      status: 'ACTIVE',
-      balance: 5000,
-      commissionBalance: 750,
-      inviteCode: 'AGENT001',
-    },
-  });
-
-  // 子代理
-  await prisma.user.create({
-    data: {
-      username: 'subagent01',
-      password: hash('sub123'),
-      securityCode: hash('sub666'),
-      role: 'SUB_AGENT',
-      status: 'ACTIVE',
-      balance: 2000,
-      commissionBalance: 0,
-      inviteCode: 'SUB001',
-      parentId: agent.id,
-    },
-  });
-
-  // 普通用户
-  await prisma.user.create({
-    data: {
-      username: 'demo',
-      password: hash('demo123'),
-      securityCode: hash('demo666'),
-      role: 'USER',
-      status: 'ACTIVE',
-      balance: 0,
-      commissionBalance: 0,
-      inviteCode: 'DEMO001',
-    },
-  });
-
-  // 商品 + 节点池
+  console.log('  🔄 补充种子产品...');
   const nodeSpecs = [
     {
       product: { title: '新加坡高速节点', description: '低延迟 1Gbps 带宽，适合东南亚业务，解锁流媒体，支持 Trojan/VMess 协议', image: 'https://images.unsplash.com/photo-1525625293386-3f8f99389edd?w=500', price: 98, agentPrice: 49 },
@@ -127,33 +86,30 @@ async function main() {
 
   let nodeCount = 0;
   for (const spec of nodeSpecs) {
-    const product = await prisma.product.create({ data: spec.product });
+    let product = await prisma.product.findFirst({ where: { title: spec.product.title } });
+    if (!product) {
+      product = await prisma.product.create({ data: spec.product });
+    }
     for (const node of spec.nodes) {
-      await prisma.nodeInstance.create({
-        data: {
-          productId: product.id,
-          host: node.host,
-          port: node.port,
-          protocol: node.protocol,
-          password: genPassword(16),
-          remark: node.remark,
-          status: 'AVAILABLE',
-          trafficLimit: 500,
-        },
-      });
-      nodeCount++;
+      const existingNode = await prisma.nodeInstance.findFirst({ where: { host: node.host, port: node.port, productId: product.id } });
+      if (!existingNode) {
+        await prisma.nodeInstance.create({
+          data: { productId: product.id, host: node.host, port: node.port, protocol: node.protocol, password: genPassword(16), remark: node.remark, status: 'AVAILABLE', trafficLimit: 500 },
+        });
+        nodeCount++;
+      }
     }
   }
+  console.log(`  ✓ 产品: ${nodeSpecs.length} 个 / 新增节点: ${nodeCount} 个`);
+}
 
-  console.log('✅ 初始化完成：');
-  console.log('   管理员:  admin / admin');
-  console.log('   代理:    agent01 / agent123');
-  console.log('   子代理:  subagent01 / sub123');
-  console.log('   用户:    demo / demo123');
-  console.log(`   产品:    ${nodeSpecs.length} 个`);
-  console.log(`   节点:    ${nodeCount} 个实例`);
+async function main() {
+  console.log('🔄 检查数据库状态...');
+  await ensureAdmin();
+  await ensureProducts();
+  console.log('✅ 初始化完成');
 }
 
 main()
-  .catch(e => { console.error('❌ 初始化失败:', e.message); process.exit(1); })
+  .catch(e => { console.error('❌ 失败:', e.message); process.exit(1); })
   .finally(() => prisma.$disconnect());
