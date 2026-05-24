@@ -1,6 +1,6 @@
 'use client';
 import { useState, useEffect, useCallback } from 'react';
-import { UserBrief, Product, OrderItem } from '@/types';
+import { UserBrief, Product, OrderItem, ProductCategory } from '@/types';
 
 interface HomeViewProps {
   user: UserBrief;
@@ -18,6 +18,12 @@ const PAY_METHODS = [
   { key: 'sandbox', label: '模拟支付', icon: '🟡', desc: '演示用，免真实付费' },
 ];
 
+const CATEGORIES: { key: ProductCategory | 'ALL'; label: string }[] = [
+  { key: 'ALL', label: '全部' },
+  { key: 'LIVE', label: '📡 直播专线' },
+  { key: 'NON_LIVE', label: '🌐 非直播专线' },
+];
+
 export default function HomeView({ user, token, onViewChange }: HomeViewProps) {
   const [products, setProducts] = useState<Product[]>([]);
   const [orders, setOrders] = useState<OrderItem[]>([]);
@@ -32,11 +38,15 @@ export default function HomeView({ user, token, onViewChange }: HomeViewProps) {
   const [showPaySelect, setShowPaySelect] = useState(false);
   const [pendingProductId, setPendingProductId] = useState('');
 
+  /* ---- 分类筛选 ---- */
+  const [category, setCategory] = useState<ProductCategory | 'ALL'>('ALL');
+
   const fetchProducts = useCallback(async () => {
-    const res = await fetch('/api/products');
+    const url = category === 'ALL' ? '/api/products' : `/api/products?category=${category}`;
+    const res = await fetch(url);
     const d = await res.json();
     if (d.success) setProducts(d.data);
-  }, []);
+  }, [category]);
 
   const fetchOrders = useCallback(async () => {
     const res = await fetch('/api/orders', { headers: api(token).headers });
@@ -46,8 +56,8 @@ export default function HomeView({ user, token, onViewChange }: HomeViewProps) {
 
   useEffect(() => {
     fetchProducts();
-    fetchOrders();
-  }, [fetchProducts, fetchOrders]);
+    if (activeTab === 'orders') fetchOrders();
+  }, [fetchProducts, fetchOrders, activeTab]);
 
   const handleOrder = async (productId: string, paymentType: string) => {
     setOrderErr('');
@@ -67,7 +77,6 @@ export default function HomeView({ user, token, onViewChange }: HomeViewProps) {
         setOrderMsg(`正在跳转支付...订单号: ${d.data.orderNo}`);
         window.open(d.data.paymentUrl, '_blank');
       } else {
-        // 余额直扣 / 模拟支付
         setOrderMsg(`购买成功！订单号: ${d.data.orderNo}`);
         if (d.data.node) setAssignedNode(d.data.node);
       }
@@ -128,30 +137,58 @@ export default function HomeView({ user, token, onViewChange }: HomeViewProps) {
 
       {/* 商品列表 */}
       {activeTab === 'products' && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {products.map(p => (
-            <div key={p.id} className="bg-[#0A0A0A] border border-white/10 rounded-2xl p-4 flex flex-col gap-3 hover:border-white/20 transition">
-              {p.image && (
-                <div className="w-full h-32 rounded-xl bg-neutral-800 overflow-hidden">
-                  <img src={p.image} alt={p.title} className="w-full h-full object-cover" onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+        <div>
+          {/* 分类 Tab */}
+          <div className="flex gap-2 mb-4">
+            {CATEGORIES.map(c => (
+              <button
+                key={c.key}
+                onClick={() => setCategory(c.key)}
+                className={`px-3 py-1.5 rounded-lg text-[10px] font-semibold transition ${
+                  category === c.key
+                    ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30'
+                    : 'border border-white/10 text-neutral-500 hover:text-white'
+                }`}
+              >
+                {c.label}
+              </button>
+            ))}
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {products.map(p => (
+              <div key={p.id} className="bg-[#0A0A0A] border border-white/10 rounded-2xl p-4 flex flex-col gap-3 hover:border-white/20 transition">
+                {p.image && (
+                  <div className="w-full h-32 rounded-xl bg-neutral-800 overflow-hidden">
+                    <img src={p.image} alt={p.title} className="w-full h-full object-cover" onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                  </div>
+                )}
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h3 className="font-bold text-sm">{p.title}</h3>
+                    <span className={`text-[9px] px-1.5 py-0.5 rounded ${
+                      p.category === 'LIVE'
+                        ? 'bg-red-500/10 text-red-400 border border-red-500/20'
+                        : 'bg-blue-500/10 text-blue-400 border border-blue-500/20'
+                    }`}>
+                      {p.category === 'LIVE' ? '直播' : '通用'}
+                    </span>
+                  </div>
+                  <p className="text-[10px] text-neutral-500 mt-1 line-clamp-2">{p.description}</p>
                 </div>
-              )}
-              <div>
-                <h3 className="font-bold text-sm">{p.title}</h3>
-                <p className="text-[10px] text-neutral-500 mt-1 line-clamp-2">{p.description}</p>
+                <div className="flex justify-between items-center mt-auto">
+                  <span className="text-lg font-mono font-bold">￥{p.price}</span>
+                  <button
+                    onClick={() => openPaySelect(p.id)}
+                    disabled={loading}
+                    className="bg-white text-black hover:bg-neutral-200 transition px-4 py-2 rounded-xl text-xs font-semibold disabled:opacity-50"
+                  >
+                    {loading ? '处理中...' : '立即购买'}
+                  </button>
+                </div>
               </div>
-              <div className="flex justify-between items-center mt-auto">
-                <span className="text-lg font-mono font-bold">￥{p.price}</span>
-                <button
-                  onClick={() => openPaySelect(p.id)}
-                  disabled={loading}
-                  className="bg-white text-black hover:bg-neutral-200 transition px-4 py-2 rounded-xl text-xs font-semibold disabled:opacity-50"
-                >
-                  {loading ? '处理中...' : '立即购买'}
-                </button>
-              </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
       )}
 
@@ -233,7 +270,6 @@ export default function HomeView({ user, token, onViewChange }: HomeViewProps) {
               {orderErr || orderMsg}
             </p>
 
-            {/* 节点分配成功提示 */}
             {assignedNode && (
               <div className="bg-black border border-white/10 rounded-xl p-4 text-left space-y-2">
                 <div className="text-[10px] text-blue-400 mb-1">节点已分配，连接信息：</div>

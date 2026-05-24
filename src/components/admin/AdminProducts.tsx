@@ -15,19 +15,19 @@ const api = (token: string) => ({
 export default function AdminProducts({ token, products, onRefresh }: AdminProductsProps) {
   const [showForm, setShowForm] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
-  const [form, setForm] = useState({ title: '', description: '', image: '', price: '', agentPrice: '' });
+  const [form, setForm] = useState({ title: '', description: '', image: '', price: '', agentPrice: '', category: 'LIVE' as 'LIVE' | 'NON_LIVE' });
   const [saveLoading, setSaveLoading] = useState(false);
   const [saveError, setSaveError] = useState('');
 
   const resetForm = () => {
-    setForm({ title: '', description: '', image: '', price: '', agentPrice: '' });
+    setForm({ title: '', description: '', image: '', price: '', agentPrice: '', category: 'LIVE' });
     setEditId(null);
     setShowForm(false);
     setSaveError('');
   };
 
   const startEdit = (p: Product) => {
-    setForm({ title: p.title, description: p.description, image: p.image, price: String(p.price), agentPrice: String(p.agentPrice) });
+    setForm({ title: p.title, description: p.description, image: p.image, price: String(p.price), agentPrice: String(p.agentPrice), category: p.category });
     setEditId(p.id);
     setShowForm(true);
     setSaveError('');
@@ -49,7 +49,7 @@ export default function AdminProducts({ token, products, onRefresh }: AdminProdu
         const res = await fetch('/api/products', {
           method: 'PUT',
           ...api(token),
-          body: JSON.stringify({ id: editId, title: form.title, description: form.description, image: form.image, price: priceNum, agentPrice: agentNum }),
+          body: JSON.stringify({ id: editId, title: form.title, description: form.description, image: form.image, price: priceNum, agentPrice: agentNum, category: form.category }),
         });
         const d = await res.json();
         if (!d.success) { setSaveError(d.error); setSaveLoading(false); return; }
@@ -57,7 +57,7 @@ export default function AdminProducts({ token, products, onRefresh }: AdminProdu
         const res = await fetch('/api/products', {
           method: 'POST',
           ...api(token),
-          body: JSON.stringify({ action: 'ADMIN_CREATE', title: form.title, description: form.description, image: form.image, price: priceNum, agentPrice: agentNum }),
+          body: JSON.stringify({ action: 'ADMIN_CREATE', title: form.title, description: form.description, image: form.image, price: priceNum, agentPrice: agentNum, category: form.category }),
         });
         const d = await res.json();
         if (!d.success) { setSaveError(d.error); setSaveLoading(false); return; }
@@ -84,6 +84,8 @@ export default function AdminProducts({ token, products, onRefresh }: AdminProdu
     onRefresh();
   };
 
+  const catLabel = (c: string) => c === 'LIVE' ? '📡 直播专线' : '🌐 非直播专线';
+
   return (
     <div className="space-y-4">
       <div className="flex gap-2">
@@ -96,6 +98,24 @@ export default function AdminProducts({ token, products, onRefresh }: AdminProdu
         <div className="bg-[#0A0A0A] border border-white/10 rounded-2xl p-6 space-y-3">
           <h3 className="text-sm font-bold">{editId ? '编辑商品' : '新增商品'}</h3>
           <input className="w-full bg-black border border-white/10 rounded-xl px-3 py-2 text-xs text-white placeholder:text-neutral-600" placeholder="商品名称" value={form.title} onChange={e => setForm({ ...form, title: e.target.value })} />
+
+          {/* 分类选择 */}
+          <div className="flex gap-2">
+            {(['LIVE', 'NON_LIVE'] as const).map(c => (
+              <button
+                key={c}
+                onClick={() => setForm({ ...form, category: c })}
+                className={`flex-1 py-2 rounded-xl text-[10px] font-semibold transition ${
+                  form.category === c
+                    ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30'
+                    : 'border border-white/10 text-neutral-400 hover:text-white'
+                }`}
+              >
+                {catLabel(c)}
+              </button>
+            ))}
+          </div>
+
           <input className="w-full bg-black border border-white/10 rounded-xl px-3 py-2 text-xs text-white placeholder:text-neutral-600" placeholder="描述" value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} />
           <input className="w-full bg-black border border-white/10 rounded-xl px-3 py-2 text-xs text-white placeholder:text-neutral-600" placeholder="图片URL" value={form.image} onChange={e => setForm({ ...form, image: e.target.value })} />
           <div className="grid grid-cols-2 gap-3">
@@ -116,7 +136,16 @@ export default function AdminProducts({ token, products, onRefresh }: AdminProdu
         {products.map(p => (
           <div key={p.id} className="bg-[#0A0A0A] border border-white/5 rounded-lg px-4 py-3 flex justify-between items-center">
             <div>
-              <div className="text-sm text-white">{p.title}</div>
+              <div className="text-sm text-white flex items-center gap-2">
+                {p.title}
+                <span className={`text-[9px] px-1.5 py-0.5 rounded ${
+                  p.category === 'LIVE'
+                    ? 'bg-red-500/10 text-red-400'
+                    : 'bg-blue-500/10 text-blue-400'
+                }`}>
+                  {catLabel(p.category)}
+                </span>
+              </div>
               <div className="text-[10px] text-neutral-500 mt-0.5">
                 零售￥{p.price} · 代理￥{p.agentPrice} · {p.status ? <span className="text-emerald-400">上架</span> : <span className="text-red-400">下架</span>}
               </div>

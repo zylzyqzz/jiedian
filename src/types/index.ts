@@ -45,6 +45,9 @@ export interface UserManageItem {
   orderCount: number;
 }
 
+// 商品分类
+export type ProductCategory = 'LIVE' | 'NON_LIVE';
+
 // 商品
 export interface Product {
   id: string;
@@ -54,6 +57,7 @@ export interface Product {
   price: number;
   agentPrice: number;
   status: boolean;
+  category: ProductCategory;
   createdAt: string;
 }
 
@@ -198,15 +202,3 @@ export interface ApiResponse<T = unknown> {
   error?: string;
   message?: string;
 }
-
-// JWT payload
-export interface JwtPayload {
-  userId: string;
-  username: string;
-  role: Role;
-  iat?: number;
-  exp?: number;
-}
-
-// 页面视图
-export type View = 'auth' | 'home' | 'agent' | 'admin' | 'profile' | 'services';

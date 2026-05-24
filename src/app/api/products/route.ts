@@ -8,8 +8,15 @@ export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
     const all = searchParams.get('all') === 'true';
+    const category = searchParams.get('category');
+
+    const where: any = all ? {} : { status: true };
+    if (category && (category === 'LIVE' || category === 'NON_LIVE')) {
+      where.category = category;
+    }
+
     const products = await prisma.product.findMany({
-      where: all ? {} : { status: true },
+      where,
       orderBy: { createdAt: 'desc' },
     });
     return NextResponse.json({ success: true, data: products });
@@ -116,14 +123,17 @@ export async function PUT(request: Request) {
     }
 
     const body = await request.json();
-    const { id, title, description, image, price, agentPrice } = body;
+    const { id, title, description, image, price, agentPrice, category } = body;
     if (!id) {
       return NextResponse.json({ success: false, error: '缺少商品ID' }, { status: 400 });
     }
 
+    const data: any = { title, description, image, price: parseFloat(price), agentPrice: parseFloat(agentPrice) };
+    if (category) data.category = category;
+
     const product = await prisma.product.update({
       where: { id },
-      data: { title, description, image, price: parseFloat(price), agentPrice: parseFloat(agentPrice) },
+      data,
     });
 
     return NextResponse.json({ success: true, data: product });

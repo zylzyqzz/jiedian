@@ -30,6 +30,7 @@ export const productCreateSchema = z.object({
   image: z.string().max(500).default(''),
   price: z.number().positive('零售价必须为正数'),
   agentPrice: z.number().positive('代理价必须为正数'),
+  category: z.enum(['LIVE', 'NON_LIVE']).default('LIVE'),
 });
 
 export const productUpdateSchema = z.object({
@@ -39,6 +40,7 @@ export const productUpdateSchema = z.object({
   image: z.string().max(500).optional(),
   price: z.number().positive(),
   agentPrice: z.number().positive(),
+  category: z.enum(['LIVE', 'NON_LIVE']).optional(),
 });
 
 export const productToggleSchema = z.object({

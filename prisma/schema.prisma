@@ -32,6 +32,7 @@ model Product {
   price       Float
   agentPrice  Float
   status      Boolean            @default(true)
+  category    String             @default("LIVE")
   createdAt   DateTime           @default(now())
   configs     AgentPriceConfig[]
   orders      Order[]

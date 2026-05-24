@@ -33,13 +33,36 @@ async function ensureAdmin() {
 }
 
 async function ensureProducts() {
+  // 每个产品的分类映射
+  const PRODUCT_CATEGORIES: Record<string, 'LIVE' | 'NON_LIVE'> = {
+    '新加坡高速节点': 'LIVE',
+    '日本东京精品线路': 'LIVE',
+    '美国洛杉矶 CN2 GIA': 'NON_LIVE',
+    '香港 HKT 家宽': 'NON_LIVE',
+    '德国法兰克福 BGP': 'NON_LIVE',
+    '韩国首尔 SK 宽带': 'NON_LIVE',
+  };
+
   const existing = await prisma.product.count();
-  if (existing >= 6) { console.log('  ✓ 产品已就绪'); return; }
+  if (existing >= 6) {
+    // 检查并补充分类
+    let fixedCount = 0;
+    for (const [title, cat] of Object.entries(PRODUCT_CATEGORIES)) {
+      const p = await prisma.product.findFirst({ where: { title } });
+      if (p && p.category !== cat) {
+        await prisma.product.update({ where: { id: p.id }, data: { category: cat } });
+        fixedCount++;
+      }
+    }
+    if (fixedCount > 0) console.log(`  ✓ 已更新 ${fixedCount} 个产品分类`);
+    else console.log('  ✓ 产品已就绪');
+    return;
+  }
 
   console.log('  🔄 补充种子产品...');
   const nodeSpecs = [
     {
-      product: { title: '新加坡高速节点', description: '低延迟 1Gbps 带宽，适合东南亚业务，解锁流媒体，支持 Trojan/VMess 协议', image: 'https://images.unsplash.com/photo-1525625293386-3f8f99389edd?w=500', price: 98, agentPrice: 49 },
+      product: { title: '新加坡高速节点', description: '低延迟 1Gbps 带宽，适合东南亚业务，解锁流媒体，支持 Trojan/VMess 协议', image: 'https://images.unsplash.com/photo-1525625293386-3f8f99389edd?w=500', price: 98, agentPrice: 49, category: 'LIVE' as const },
       nodes: [
         { host: 'sg1.nodehub.pro', port: 443, protocol: 'trojan', remark: '新加坡 BGP 线路 01' },
         { host: 'sg2.nodehub.pro', port: 8443, protocol: 'vmess', remark: '新加坡 BGP 线路 02' },
@@ -47,7 +70,7 @@ async function ensureProducts() {
       ],
     },
     {
-      product: { title: '日本东京精品线路', description: 'BGP 优化线路，延迟 <50ms，原生 IP，支持 Netflix/Disney+ 解锁', image: 'https://images.unsplash.com/photo-1542051841857-5f90071e7989?w=500', price: 128, agentPrice: 64 },
+      product: { title: '日本东京精品线路', description: 'BGP 优化线路，延迟 <50ms，原生 IP，支持 Netflix/Disney+ 解锁', image: 'https://images.unsplash.com/photo-1542051841857-5f90071e7989?w=500', price: 128, agentPrice: 64, category: 'LIVE' as const },
       nodes: [
         { host: 'jp1.nodehub.pro', port: 443, protocol: 'trojan', remark: '东京 BGP 01' },
         { host: 'jp2.nodehub.pro', port: 8443, protocol: 'vmess', remark: '东京 BBtec 线路' },
@@ -55,28 +78,28 @@ async function ensureProducts() {
       ],
     },
     {
-      product: { title: '美国洛杉矶 CN2 GIA', description: '电信 CN2 GIA 回程优化，1Gbps 带宽，三网直连，稳定低丢包', image: 'https://images.unsplash.com/photo-1480714378408-67cf0d13bc1b?w=500', price: 88, agentPrice: 44 },
+      product: { title: '美国洛杉矶 CN2 GIA', description: '电信 CN2 GIA 回程优化，1Gbps 带宽，三网直连，稳定低丢包', image: 'https://images.unsplash.com/photo-1480714378408-67cf0d13bc1b?w=500', price: 88, agentPrice: 44, category: 'NON_LIVE' as const },
       nodes: [
         { host: 'us1.nodehub.pro', port: 443, protocol: 'trojan', remark: '洛杉矶 CN2 GIA 01' },
         { host: 'us2.nodehub.pro', port: 8443, protocol: 'vmess', remark: '洛杉矶 CN2 GIA 02' },
       ],
     },
     {
-      product: { title: '香港 HKT 家宽', description: 'HKT 家宽原生 IP，动态住宅，指纹纯净，适合电商/TK 运营', image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=500', price: 188, agentPrice: 94 },
+      product: { title: '香港 HKT 家宽', description: 'HKT 家宽原生 IP，动态住宅，指纹纯净，适合电商/TK 运营', image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=500', price: 188, agentPrice: 94, category: 'NON_LIVE' as const },
       nodes: [
         { host: 'hk1.nodehub.pro', port: 443, protocol: 'trojan', remark: 'HKT 家宽 01' },
         { host: 'hk2.nodehub.pro', port: 8443, protocol: 'vmess', remark: 'HKT 家宽 02' },
       ],
     },
     {
-      product: { title: '德国法兰克福 BGP', description: '欧洲核心节点，1Gbps 不限流量，适合外贸建站、数据中转', image: 'https://images.unsplash.com/photo-1467269204594-9661b134dd2b?w=500', price: 78, agentPrice: 39 },
+      product: { title: '德国法兰克福 BGP', description: '欧洲核心节点，1Gbps 不限流量，适合外贸建站、数据中转', image: 'https://images.unsplash.com/photo-1467269204594-9661b134dd2b?w=500', price: 78, agentPrice: 39, category: 'NON_LIVE' as const },
       nodes: [
         { host: 'de1.nodehub.pro', port: 443, protocol: 'trojan', remark: '法兰克福 BGP 01' },
         { host: 'de2.nodehub.pro', port: 8443, protocol: 'vmess', remark: '法兰克福 Hetzner' },
       ],
     },
     {
-      product: { title: '韩国首尔 SK 宽带', description: 'SK 宽带原生 IP，延迟极低，适合游戏加速、直播推流', image: 'https://images.unsplash.com/photo-1517154421773-0529f29ea451?w=500', price: 108, agentPrice: 54 },
+      product: { title: '韩国首尔 SK 宽带', description: 'SK 宽带原生 IP，延迟极低，适合游戏加速、直播推流', image: 'https://images.unsplash.com/photo-1517154421773-0529f29ea451?w=500', price: 108, agentPrice: 54, category: 'NON_LIVE' as const },
       nodes: [
         { host: 'kr1.nodehub.pro', port: 443, protocol: 'trojan', remark: '首尔 SK 宽带 01' },
         { host: 'kr2.nodehub.pro', port: 8443, protocol: 'vmess', remark: '首尔 KT 线路' },
