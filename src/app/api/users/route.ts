@@ -1,7 +1,21 @@
 import { NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
+import bcrypt from 'bcryptjs';
+import { prisma } from '@/lib/prisma';
+import { signToken, requireAuth } from '@/lib/auth';
+import { registerSchema, loginSchema, changePasswordSchema, rechargeSchema } from '@/lib/validators';
+import { UserBrief } from '@/types';
 
-const prisma = new PrismaClient();
+function toBrief(user: any): UserBrief {
+  return {
+    id: user.id,
+    username: user.username,
+    role: user.role,
+    status: user.status,
+    balance: user.balance,
+    commissionBalance: user.commissionBalance,
+    inviteCode: user.inviteCode,
+  };
+}
 
 function genInviteCode(): string {
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
@@ -10,19 +24,27 @@ function genInviteCode(): string {
   return code;
 }
 
+/* ========== POST ========== */
 export async function POST(request: Request) {
   try {
-    const data = await request.json();
-    const { action } = data;
+    const body = await request.json();
+    const { action } = body;
 
-    // ===== 注册 =====
+    /* ----- 注册 ----- */
     if (action === 'REGISTER') {
-      const { username, password, securityCode, refCode } = data;
-      if (!username || !password || !securityCode) {
-        return NextResponse.json({ error: '用户名、密码、安全码均不能为空' }, { status: 400 });
+      const parsed = registerSchema.safeParse(body);
+      if (!parsed.success) {
+        return NextResponse.json({ success: false, error: parsed.error.issues[0].message }, { status: 400 });
       }
+      const { username, password, securityCode, refCode } = parsed.data;
+
       const exists = await prisma.user.findUnique({ where: { username } });
-      if (exists) return NextResponse.json({ error: '用户名已存在' }, { status: 400 });
+      if (exists) {
+        return NextResponse.json({ success: false, error: '用户名已存在' }, { status: 409 });
+      }
+
+      const hashedPassword = await bcrypt.hash(password, 10);
+      const hashedSecurityCode = await bcrypt.hash(securityCode, 10);
 
       let inviteCode = genInviteCode();
       while (await prisma.user.findUnique({ where: { inviteCode } })) {
@@ -32,71 +54,174 @@ export async function POST(request: Request) {
       let parentId: string | null = null;
       if (refCode) {
         const parent = await prisma.user.findUnique({ where: { inviteCode: refCode } });
-        if (parent && parent.role === 'AGENT') parentId = parent.id;
+        if (parent && (parent.role === 'AGENT' || parent.role === 'ADMIN')) {
+          parentId = parent.id;
+        }
       }
 
       const user = await prisma.user.create({
-        data: { username, password, securityCode, inviteCode, parentId },
+        data: {
+          username,
+          password: hashedPassword,
+          securityCode: hashedSecurityCode,
+          inviteCode,
+          parentId,
+        },
       });
+
+      const token = await signToken({
+        userId: user.id,
+        username: user.username,
+        role: user.role as any,
+      });
+
       return NextResponse.json({
         success: true,
-        user: { id: user.id, username: user.username, role: user.role, balance: user.balance, commissionBalance: user.commissionBalance, inviteCode: user.inviteCode },
+        data: { user: toBrief(user), token },
       });
     }
 
-    // ===== 登录 =====
+    /* ----- 登录 ----- */
     if (action === 'LOGIN') {
-      const { username, password, loginRole } = data;
-      if (!username || !password) return NextResponse.json({ error: '用户名和密码不能为空' }, { status: 400 });
+      const parsed = loginSchema.safeParse(body);
+      if (!parsed.success) {
+        return NextResponse.json({ success: false, error: parsed.error.issues[0].message }, { status: 400 });
+      }
+      const { username, password, loginRole } = parsed.data;
+
       const user = await prisma.user.findUnique({ where: { username } });
-      if (!user) return NextResponse.json({ error: '用户不存在' }, { status: 404 });
-      if (user.password !== password) return NextResponse.json({ error: '密码错误' }, { status: 401 });
-      if (loginRole === 'ADMIN' && user.role !== 'ADMIN') return NextResponse.json({ error: '非管理员账号' }, { status: 403 });
-      if (loginRole === 'AGENT' && user.role !== 'AGENT' && user.role !== 'SUB_AGENT') return NextResponse.json({ error: '非代理账号，请先充值3000元升级' }, { status: 403 });
+      if (!user) {
+        return NextResponse.json({ success: false, error: '用户名或密码错误' }, { status: 401 });
+      }
+
+      const valid = await bcrypt.compare(password, user.password);
+      if (!valid) {
+        return NextResponse.json({ success: false, error: '用户名或密码错误' }, { status: 401 });
+      }
+
+      if (loginRole === 'ADMIN' && user.role !== 'ADMIN') {
+        return NextResponse.json({ success: false, error: '非管理员账号' }, { status: 403 });
+      }
+      if (loginRole === 'AGENT' && user.role !== 'AGENT' && user.role !== 'SUB_AGENT') {
+        return NextResponse.json({ success: false, error: '非代理账号，请先充值升级' }, { status: 403 });
+      }
+
+      // 封禁检查
+      if (user.status === 'BANNED') {
+        return NextResponse.json({ success: false, error: '账号已被封禁' }, { status: 403 });
+      }
+
+      const token = await signToken({
+        userId: user.id,
+        username: user.username,
+        role: user.role as any,
+      });
+
       return NextResponse.json({
         success: true,
-        user: { id: user.id, username: user.username, role: user.role, balance: user.balance, commissionBalance: user.commissionBalance, inviteCode: user.inviteCode },
+        data: { user: toBrief(user), token },
       });
     }
 
-    // ===== 修改密码 =====
+    /* ----- 修改密码 ----- */
     if (action === 'CHANGE_PASSWORD') {
-      const { userId, oldPassword, newPassword } = data;
-      if (!userId || !oldPassword || !newPassword) return NextResponse.json({ error: '参数不完整' }, { status: 400 });
-      if (newPassword.length < 4) return NextResponse.json({ error: '新密码至少4位' }, { status: 400 });
+      const session = await requireAuth(request);
+      if (!session) {
+        return NextResponse.json({ success: false, error: '请先登录' }, { status: 401 });
+      }
+
+      const parsed = changePasswordSchema.safeParse(body);
+      if (!parsed.success) {
+        return NextResponse.json({ success: false, error: parsed.error.issues[0].message }, { status: 400 });
+      }
+      const { oldPassword, newPassword } = parsed.data;
+      // 使用 JWT 认证的 userId，而非请求体中的参数
+      const userId = session.userId;
+
       const user = await prisma.user.findUnique({ where: { id: userId } });
-      if (!user) return NextResponse.json({ error: '用户不存在' }, { status: 404 });
-      if (user.password !== oldPassword) return NextResponse.json({ error: '原密码错误' }, { status: 401 });
-      await prisma.user.update({ where: { id: userId }, data: { password: newPassword } });
+      if (!user) {
+        return NextResponse.json({ success: false, error: '用户不存在' }, { status: 404 });
+      }
+
+      const valid = await bcrypt.compare(oldPassword, user.password);
+      if (!valid) {
+        return NextResponse.json({ success: false, error: '原密码错误' }, { status: 401 });
+      }
+
+      const hashedNew = await bcrypt.hash(newPassword, 10);
+      await prisma.user.update({ where: { id: userId }, data: { password: hashedNew } });
+
       return NextResponse.json({ success: true, message: '密码修改成功' });
     }
 
-    // ===== 充值 =====
+    /* ----- 充值（管理员操作或系统内部） ----- */
     if (action === 'RECHARGE') {
-      const { userId, amount } = data;
+      const parsed = rechargeSchema.safeParse(body);
+      if (!parsed.success) {
+        return NextResponse.json({ success: false, error: parsed.error.issues[0].message }, { status: 400 });
+      }
+      const { amount } = parsed.data;
+      const userId = body.userId;
+      if (!userId) {
+        return NextResponse.json({ success: false, error: '缺少用户标识' }, { status: 400 });
+      }
+
       const user = await prisma.user.findUnique({ where: { id: userId } });
-      if (!user) return NextResponse.json({ error: '用户不存在' }, { status: 404 });
+      if (!user) {
+        return NextResponse.json({ success: false, error: '用户不存在' }, { status: 404 });
+      }
 
       let targetRole = user.role;
-      if ((user.role === 'USER' || user.role === 'DISTRIBUTOR') && amount >= 3000) targetRole = 'AGENT';
+      if ((user.role === 'USER') && amount >= 3000) {
+        targetRole = 'AGENT';
+      }
 
-      await prisma.user.update({ where: { id: userId }, data: { balance: { increment: amount }, role: targetRole } });
-      await prisma.transactionHistory.create({ data: { userId, type: 'RECHARGE', walletType: 'BALANCE', amount, remark: `充值入账 ￥${amount}，身份: ${targetRole}` } });
+      await prisma.user.update({
+        where: { id: userId },
+        data: { balance: { increment: amount }, role: targetRole },
+      });
 
-      if (user.role === 'USER' && user.parentId) {
+      await prisma.transactionHistory.create({
+        data: {
+          userId,
+          type: 'RECHARGE',
+          walletType: 'BALANCE',
+          amount,
+          remark: `充值入账 ￥${amount}`,
+        },
+      });
+
+      // 招商返佣：用户通过代理邀请码注册后首次充值>=3000升级为子代理
+      if (user.parentId && amount >= 3000 && user.role === 'USER') {
         const parent = await prisma.user.findUnique({ where: { id: user.parentId } });
         if (parent && parent.role === 'AGENT') {
-          await prisma.user.update({ where: { id: userId }, data: { role: 'SUB_AGENT' } });
+          await prisma.user.update({
+            where: { id: userId },
+            data: { role: 'SUB_AGENT' },
+          });
           const reward = amount * 0.25;
-          await prisma.user.update({ where: { id: parent.id }, data: { commissionBalance: { increment: reward } } });
-          await prisma.transactionHistory.create({ data: { userId: parent.id, type: 'AGENT_REWARD', walletType: 'COMMISSION', amount: reward, remark: `招募子代理 ${user.username}，25%招商提成 ￥${reward}` } });
+          await prisma.user.update({
+            where: { id: parent.id },
+            data: { commissionBalance: { increment: reward } },
+          });
+          await prisma.transactionHistory.create({
+            data: {
+              userId: parent.id,
+              type: 'AGENT_REWARD',
+              walletType: 'COMMISSION',
+              amount: reward,
+              remark: `招商奖励：${user.username} 充值升级，25% 返佣 ￥${reward.toFixed(2)}`,
+            },
+          });
         }
       }
-      return NextResponse.json({ success: true, role: targetRole, message: '充值成功' });
+
+      return NextResponse.json({ success: true, message: '充值成功', data: { role: targetRole } });
     }
 
-    return NextResponse.json({ error: '未知操作' }, { status: 400 });
+    return NextResponse.json({ success: false, error: '未知操作' }, { status: 400 });
   } catch (err: any) {
-    return NextResponse.json({ error: err.message }, { status: 500 });
+    console.error('[users]', err);
+    return NextResponse.json({ success: false, error: err.message || '服务器内部错误' }, { status: 500 });
   }
 }

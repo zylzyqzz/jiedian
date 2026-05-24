@@ -1,7 +1,32 @@
+# dependencies
 node_modules/
 .next/
+
+# database
 prisma/dev.db
 prisma/dev.db-journal
+
+# environment variables
 .env
 .env.local
 .env.production
+.env*.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# misc
+*.tsbuildinfo
+next-env.d.ts

@@ -13,6 +13,7 @@ model User {
   password          String
   securityCode      String               @default("")
   role              String               @default("USER")
+  status            String               @default("ACTIVE")
   balance           Float                @default(0.00)
   commissionBalance Float                @default(0.00)
   inviteCode        String               @unique
@@ -20,6 +21,7 @@ model User {
   createdAt         DateTime             @default(now())
   orders            Order[]
   transactions      TransactionHistory[]
+  nodes             NodeInstance[]
 }
 
 model Product {
@@ -33,6 +35,7 @@ model Product {
   createdAt   DateTime           @default(now())
   configs     AgentPriceConfig[]
   orders      Order[]
+  nodes       NodeInstance[]
 }
 
 model AgentPriceConfig {
@@ -56,6 +59,27 @@ model Order {
   user          User                 @relation(fields: [userId], references: [id])
   product       Product              @relation(fields: [productId], references: [id])
   transactions  TransactionHistory[]
+  node          NodeInstance?
+}
+
+model NodeInstance {
+  id           String   @id @default(uuid())
+  productId    String
+  host         String
+  port         Int
+  protocol     String   @default("trojan")
+  password     String
+  remark       String   @default("")
+  status       String   @default("AVAILABLE")
+  orderId      String?  @unique
+  userId       String?
+  expireAt     DateTime?
+  trafficLimit Float    @default(0)
+  trafficUsed  Float    @default(0)
+  createdAt    DateTime @default(now())
+  product      Product  @relation(fields: [productId], references: [id])
+  order        Order?   @relation(fields: [orderId], references: [id])
+  user         User?    @relation(fields: [userId], references: [id])
 }
 
 model TransactionHistory {
