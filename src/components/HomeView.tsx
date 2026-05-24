@@ -41,6 +41,7 @@ export default function HomeView({ user, token, onViewChange }: HomeViewProps) {
   const [showContact, setShowContact] = useState(false);
   const [showPaySelect, setShowPaySelect] = useState(false);
   const [pendingProductId, setPendingProductId] = useState('');
+  const [showOtherPay, setShowOtherPay] = useState(false);
   const [category, setCategory] = useState<ProductCategory | 'ALL'>('ALL');
 
   useEffect(() => {
@@ -87,7 +88,7 @@ export default function HomeView({ user, token, onViewChange }: HomeViewProps) {
     finally { setLoading(false); }
   };
 
-  const openPaySelect = (productId: string) => { setPendingProductId(productId); setShowPaySelect(true); };
+  const openPaySelect = (productId: string) => { setPendingProductId(productId); setShowOtherPay(false); setShowPaySelect(true); };
   const openDetail = (product: Product) => { setSelectedProduct(product); setShowDetail(true); };
   const statusLabel: Record<string, string> = { PENDING: '待支付', PAID: '已支付', COMPLETED: '已完成' };
   const siteTitle = siteName || 'NodeHub';
@@ -491,19 +492,40 @@ export default function HomeView({ user, token, onViewChange }: HomeViewProps) {
               </div>
             ) : (
               <div className="space-y-3">
-                {PAY_METHODS.map(m => (
+                {/* 余额支付（默认） */}
+                <button
+                  onClick={() => { setShowPaySelect(false); handleOrder(pendingProductId, 'balance'); }}
+                  className="w-full bg-blue-500 hover:bg-blue-600 text-white py-3.5 rounded-xl text-base font-semibold transition-all duration-200 active:scale-[0.98]"
+                >
+                  余额支付 · ¥{products.find(p => p.id === pendingProductId)?.price || 0}
+                </button>
+
+                {/* 其他支付方式 */}
+                <div>
                   <button
-                    key={m.key}
-                    onClick={() => { setShowPaySelect(false); handleOrder(pendingProductId, m.key); }}
-                    className="w-full bg-black border border-white/[0.08] rounded-xl p-4 flex items-center gap-4 hover:border-blue-500/30 transition-all duration-200 active:scale-[0.98] text-left"
+                    onClick={() => setShowOtherPay(!showOtherPay)}
+                    className="w-full text-xs text-neutral-500 hover:text-neutral-300 py-2 transition-colors"
                   >
-                    <span className="text-2xl">{m.key === 'alipay' ? '🔵' : m.key === 'wxpay' ? '🟢' : '🟡'}</span>
-                    <div>
-                      <div className="text-sm font-semibold text-white">{m.label}</div>
-                      <div className="text-xs text-neutral-500 mt-0.5">{m.desc}</div>
-                    </div>
+                    {showOtherPay ? '收起其他支付方式 ▲' : '其他支付方式 ▼'}
                   </button>
-                ))}
+                  {showOtherPay && (
+                    <div className="space-y-2 mt-2">
+                      {PAY_METHODS.map(m => (
+                        <button
+                          key={m.key}
+                          onClick={() => { setShowPaySelect(false); handleOrder(pendingProductId, m.key); }}
+                          className="w-full bg-black border border-white/[0.08] rounded-xl p-4 flex items-center gap-4 hover:border-blue-500/30 transition-all duration-200 active:scale-[0.98] text-left"
+                        >
+                          <span className="text-2xl">{m.key === 'alipay' ? '🔵' : m.key === 'wxpay' ? '🟢' : '🟡'}</span>
+                          <div>
+                            <div className="text-sm font-semibold text-white">{m.label}</div>
+                            <div className="text-xs text-neutral-500 mt-0.5">{m.desc}</div>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
             )}
           </div>

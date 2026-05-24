@@ -44,7 +44,7 @@ export default function ProfileView({ user, token }: ProfileViewProps) {
   const [txs, setTxs] = useState<TransactionItem[]>([]);
   const [services, setServices] = useState<NodeBrief[]>([]);
   const [refLink, setRefLink] = useState('');
-  const [rebateRate, setRebateRate] = useState('20');
+  const [rebateRate, setRebateRate] = useState(user.role === 'AGENT' ? '20' : '10');
   const [withdrawMin, setWithdrawMin] = useState('100');
   const [contactInfo, setContactInfo] = useState('');
   const [showRecharge, setShowRecharge] = useState(false);
