@@ -61,7 +61,7 @@ async function ensureProducts() {
   console.log('  \u{1F504} 补充种子产品...');
   const nodeSpecs = [
     {
-      product: { title: '新加坡高速节点', description: '低延迟 1Gbps 带宽，适合东南亚业务，解锁流媒体，支持 Trojan/VMess 协议', image: 'https://images.unsplash.com/photo-1525625293386-3f8f99389edd?w=500', price: 98, agentPrice: 49, category: 'LIVE' },
+      product: { title: '新加坡高速节点', description: '全站 IPLC 专线，新加坡 BGP 原生纯净 IP，双 ISP 认证，流媒体全解锁，延迟 <30ms，适合 TikTok/Shopee 运营', image: 'https://images.unsplash.com/photo-1525625293386-3f8f99389edd?w=500', originalPrice: 168, price: 98, agentPrice: 49, category: 'LIVE' },
       nodes: [
         { host: 'sg1.nodehub.pro', port: 443, protocol: 'trojan', remark: '新加坡 BGP 线路 01' },
         { host: 'sg2.nodehub.pro', port: 8443, protocol: 'vmess', remark: '新加坡 BGP 线路 02' },
@@ -69,7 +69,7 @@ async function ensureProducts() {
       ],
     },
     {
-      product: { title: '日本东京精品线路', description: 'BGP 优化线路，延迟 <50ms，原生 IP，支持 Netflix/Disney+ 解锁', image: 'https://images.unsplash.com/photo-1542051841857-5f90071e7989?w=500', price: 128, agentPrice: 64, category: 'LIVE' },
+      product: { title: '日本东京精品线路', description: '全站 IPLC 认证，东京 BGP 原生 IP，双 ISP 住宅纯净度，Netflix/Disney+ 全解锁，延迟 <50ms，跨境电商首选', image: 'https://images.unsplash.com/photo-1542051841857-5f90071e7989?w=500', originalPrice: 198, price: 128, agentPrice: 64, category: 'LIVE' },
       nodes: [
         { host: 'jp1.nodehub.pro', port: 443, protocol: 'trojan', remark: '东京 BGP 01' },
         { host: 'jp2.nodehub.pro', port: 8443, protocol: 'vmess', remark: '东京 BBtec 线路' },
@@ -77,28 +77,28 @@ async function ensureProducts() {
       ],
     },
     {
-      product: { title: '美国洛杉矶 CN2 GIA', description: '电信 CN2 GIA 回程优化，1Gbps 带宽，三网直连，稳定低丢包', image: 'https://images.unsplash.com/photo-1480714378408-67cf0d13bc1b?w=500', price: 88, agentPrice: 44, category: 'NON_LIVE' },
+      product: { title: '美国洛杉矶 CN2 GIA', description: 'CN2 GIA 精品线路，三网直连回程优化，1Gbps 带宽，原生住宅 IP 纯净指纹，全站 IPLC 认证，适合 Netflix/TikTok 运营', image: 'https://images.unsplash.com/photo-1480714378408-67cf0d13bc1b?w=500', originalPrice: 148, price: 88, agentPrice: 44, category: 'NON_LIVE' },
       nodes: [
         { host: 'us1.nodehub.pro', port: 443, protocol: 'trojan', remark: '洛杉矶 CN2 GIA 01' },
         { host: 'us2.nodehub.pro', port: 8443, protocol: 'vmess', remark: '洛杉矶 CN2 GIA 02' },
       ],
     },
     {
-      product: { title: '香港 HKT 家宽', description: 'HKT 家宽原生 IP，动态住宅，指纹纯净，适合电商/TK 运营', image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=500', price: 188, agentPrice: 94, category: 'NON_LIVE' },
+      product: { title: '香港 HKT 家宽', description: 'HKT 家宽原生动态 IP，双 ISP 住宅认证，指纹纯净度极高，全站 IPLC 加持，全流媒体解锁，适合 TK 运营/电商', image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=500', originalPrice: 288, price: 188, agentPrice: 94, category: 'NON_LIVE' },
       nodes: [
         { host: 'hk1.nodehub.pro', port: 443, protocol: 'trojan', remark: 'HKT 家宽 01' },
         { host: 'hk2.nodehub.pro', port: 8443, protocol: 'vmess', remark: 'HKT 家宽 02' },
       ],
     },
     {
-      product: { title: '德国法兰克福 BGP', description: '欧洲核心节点，1Gbps 不限流量，适合外贸建站、数据中转', image: 'https://images.unsplash.com/photo-1467269204594-9661b134dd2b?w=500', price: 78, agentPrice: 39, category: 'NON_LIVE' },
+      product: { title: '德国法兰克福 BGP', description: '欧洲核心 BGP 节点，1Gbps 不限流量，原生 IP 纯净度高，全站 IPLC 认证，适合外贸建站/数据中转/跨境电商', image: 'https://images.unsplash.com/photo-1467269204594-9661b134dd2b?w=500', originalPrice: 128, price: 78, agentPrice: 39, category: 'NON_LIVE' },
       nodes: [
         { host: 'de1.nodehub.pro', port: 443, protocol: 'trojan', remark: '法兰克福 BGP 01' },
         { host: 'de2.nodehub.pro', port: 8443, protocol: 'vmess', remark: '法兰克福 Hetzner' },
       ],
     },
     {
-      product: { title: '韩国首尔 SK 宽带', description: 'SK 宽带原生 IP，延迟极低，适合游戏加速、直播推流', image: 'https://images.unsplash.com/photo-1517154421773-0529f29ea451?w=500', price: 108, agentPrice: 54, category: 'NON_LIVE' },
+      product: { title: '韩国首尔 SK 宽带', description: 'SK 宽带原生 IP，双 ISP 住宅认证，延迟极低，IP 纯净度高，全站 IPLC 认证，适合游戏加速/直播推流/TikTok 运营', image: 'https://images.unsplash.com/photo-1517154421773-0529f29ea451?w=500', originalPrice: 168, price: 108, agentPrice: 54, category: 'NON_LIVE' },
       nodes: [
         { host: 'kr1.nodehub.pro', port: 443, protocol: 'trojan', remark: '首尔 SK 宽带 01' },
         { host: 'kr2.nodehub.pro', port: 8443, protocol: 'vmess', remark: '首尔 KT 线路' },

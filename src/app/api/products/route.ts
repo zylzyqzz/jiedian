@@ -123,12 +123,13 @@ export async function PUT(request: Request) {
     }
 
     const body = await request.json();
-    const { id, title, description, image, price, agentPrice, category } = body;
+    const { id, title, description, image, originalPrice, price, agentPrice, category } = body;
     if (!id) {
       return NextResponse.json({ success: false, error: '缺少商品ID' }, { status: 400 });
     }
 
     const data: any = { title, description, image, price: parseFloat(price), agentPrice: parseFloat(agentPrice) };
+    if (originalPrice !== undefined) data.originalPrice = parseFloat(originalPrice) || 0;
     if (category) data.category = category;
 
     const product = await prisma.product.update({

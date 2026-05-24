@@ -228,10 +228,9 @@ export default function HomeView({ user, token, onViewChange }: HomeViewProps) {
                   )}
 
                   <div className="p-6 sm:p-7">
-                    <div className="flex items-start justify-between gap-3 mb-5">
+                    <div className="flex items-start justify-between gap-3 mb-4">
                       <div className="min-w-0">
                         <h3 className="text-lg font-bold text-white group-hover:text-blue-400 transition-colors truncate">{p.title}</h3>
-                        <p className="text-sm text-neutral-500 mt-1.5 line-clamp-2 leading-relaxed">{p.description}</p>
                       </div>
                       {!p.image && i === 1 && (
                         <span className="shrink-0 text-[10px] font-bold px-2.5 py-1 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/20">
@@ -244,15 +243,30 @@ export default function HomeView({ user, token, onViewChange }: HomeViewProps) {
 
                     <div className="flex items-end justify-between">
                       <div>
-                        <div className="flex items-baseline gap-1">
-                          <span className="text-xs text-neutral-500">¥</span>
-                          <span className="text-3xl font-extrabold text-white tracking-tight">{p.price}</span>
-                          <span className="text-sm text-neutral-500">/ 月</span>
-                        </div>
-                        {p.agentPrice > 0 && p.agentPrice < p.price && (
-                          <div className="flex items-center gap-2 mt-1">
-                            <span className="text-xs text-neutral-500 line-through">¥{p.price * 1.4}</span>
-                            <span className="text-[10px] font-semibold text-amber-400 bg-amber-500/10 px-1.5 py-0.5 rounded">限时特价</span>
+                        {/* 原价 + 限时特价 */}
+                        {p.originalPrice > 0 && p.originalPrice > p.price ? (
+                          <>
+                            <div className="flex items-baseline gap-2">
+                              <span className="text-sm text-neutral-500 line-through">¥{p.originalPrice}</span>
+                              <span className="text-[10px] font-semibold text-amber-400 bg-amber-500/10 px-1.5 py-0.5 rounded">限时特价</span>
+                            </div>
+                            <div className="flex items-baseline gap-1 mt-1">
+                              <span className="text-xs text-neutral-500">¥</span>
+                              <span className="text-3xl font-extrabold text-white tracking-tight">{p.price}</span>
+                              <span className="text-sm text-neutral-500">/ 月</span>
+                            </div>
+                          </>
+                        ) : (
+                          <div className="flex items-baseline gap-1">
+                            <span className="text-xs text-neutral-500">¥</span>
+                            <span className="text-3xl font-extrabold text-white tracking-tight">{p.price}</span>
+                            <span className="text-sm text-neutral-500">/ 月</span>
+                          </div>
+                        )}
+                        {/* 代理价 */}
+                        {p.agentPrice > 0 && (
+                          <div className="text-xs text-neutral-500 mt-1">
+                            代理价 <span className="text-neutral-300 font-medium">¥{p.agentPrice}</span>
                           </div>
                         )}
                       </div>

@@ -16,7 +16,7 @@ export default function AdminProducts({ token, products, onRefresh }: AdminProdu
   const [showForm, setShowForm] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
   const [form, setForm] = useState({
-    title: '', description: '', image: '', price: '', agentPrice: '', category: 'LIVE' as 'LIVE' | 'NON_LIVE'
+    title: '', description: '', image: '', originalPrice: '', price: '', agentPrice: '', category: 'LIVE' as 'LIVE' | 'NON_LIVE'
   });
   const [saveLoading, setSaveLoading] = useState(false);
   const [saveError, setSaveError] = useState('');
@@ -24,7 +24,7 @@ export default function AdminProducts({ token, products, onRefresh }: AdminProdu
   const fileRef = useRef<HTMLInputElement>(null);
 
   const resetForm = () => {
-    setForm({ title: '', description: '', image: '', price: '', agentPrice: '', category: 'LIVE' });
+    setForm({ title: '', description: '', image: '', originalPrice: '', price: '', agentPrice: '', category: 'LIVE' });
     setEditId(null);
     setShowForm(false);
     setSaveError('');
@@ -32,7 +32,7 @@ export default function AdminProducts({ token, products, onRefresh }: AdminProdu
   };
 
   const startEdit = (p: Product) => {
-    setForm({ title: p.title, description: p.description, image: p.image, price: String(p.price), agentPrice: String(p.agentPrice), category: p.category });
+    setForm({ title: p.title, description: p.description, image: p.image, originalPrice: String(p.originalPrice || ''), price: String(p.price), agentPrice: String(p.agentPrice), category: p.category });
     setEditId(p.id);
     setShowForm(true);
     setSaveError('');
@@ -67,11 +67,12 @@ export default function AdminProducts({ token, products, onRefresh }: AdminProdu
     setSaveError('');
     const priceNum = parseFloat(form.price);
     const agentNum = parseFloat(form.agentPrice);
+    const origNum = parseFloat(form.originalPrice) || 0;
     if (!form.title.trim()) { setSaveError('商品名称不能为空'); setSaveLoading(false); return; }
     if (isNaN(priceNum) || priceNum <= 0) { setSaveError('零售价必须为正数'); setSaveLoading(false); return; }
     if (isNaN(agentNum) || agentNum <= 0) { setSaveError('代理价必须为正数'); setSaveLoading(false); return; }
     try {
-      const payload = { title: form.title, description: form.description, image: form.image, price: priceNum, agentPrice: agentNum, category: form.category };
+      const payload = { title: form.title, description: form.description, image: form.image, originalPrice: origNum, price: priceNum, agentPrice: agentNum, category: form.category };
       if (editId) {
         const res = await fetch('/api/products', { method: 'PUT', ...api(token), body: JSON.stringify({ id: editId, ...payload }) });
         const d = await res.json();
@@ -153,7 +154,12 @@ export default function AdminProducts({ token, products, onRefresh }: AdminProdu
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-3 gap-3">
+            <div>
+              <p className="text-xs text-neutral-500 mb-1.5">原价 (¥)</p>
+              <input type="number" className="w-full bg-black border border-white/[0.08] rounded-xl px-4 py-2.5 text-sm text-white placeholder:text-neutral-600 focus:border-blue-500/50 focus:outline-none"
+                placeholder="原价" value={form.originalPrice} onChange={e => setForm({ ...form, originalPrice: e.target.value })} />
+            </div>
             <div>
               <p className="text-xs text-neutral-500 mb-1.5">零售价 (¥)</p>
               <input type="number" className="w-full bg-black border border-white/[0.08] rounded-xl px-4 py-2.5 text-sm text-white placeholder:text-neutral-600 focus:border-blue-500/50 focus:outline-none"

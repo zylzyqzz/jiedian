@@ -29,6 +29,7 @@ model Product {
   title       String
   description String
   image       String
+  originalPrice Float             @default(0)
   price       Float
   agentPrice  Float
   status      Boolean            @default(true)

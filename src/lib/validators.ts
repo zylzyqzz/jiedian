@@ -28,6 +28,7 @@ export const productCreateSchema = z.object({
   title: z.string().min(1, '商品名不能为空').max(100),
   description: z.string().max(1000).default(''),
   image: z.string().max(500000).default(''),
+  originalPrice: z.number().min(0).default(0),
   price: z.number().positive('零售价必须为正数'),
   agentPrice: z.number().positive('代理价必须为正数'),
   category: z.enum(['LIVE', 'NON_LIVE']).default('LIVE'),

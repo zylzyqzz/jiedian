@@ -54,6 +54,7 @@ export interface Product {
   title: string;
   description: string;
   image: string;
+  originalPrice: number;
   price: number;
   agentPrice: number;
   status: boolean;
