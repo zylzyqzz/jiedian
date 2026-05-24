@@ -10,7 +10,7 @@ const api = (token: string) => ({
 });
 
 const SETTING_KEYS = [
-  { key: 'siteIntro', label: '网站简介（首页展示）', type: 'textarea', rows: 4, placeholder: '维度光年科技致力于解决电商外贸传媒直播行业真实性问题以及网络账号体现等全流程服务' },
+  { key: 'siteIntro', label: '网站简介（首页展示）', type: 'textarea', rows: 4, placeholder: '全栈代理分销管理系统，支持多级代理、节点自动分配、佣金自动结算。' },
   { key: 'siteName', label: '站点名称', type: 'text', placeholder: 'NodeHub' },
   { key: 'contactInfo', label: '联系方式', type: 'text', placeholder: '客服微信 / 邮箱等' },
   { key: 'footerText', label: '页脚文字', type: 'text', placeholder: '© 2026 NodeHub. All rights reserved.' },

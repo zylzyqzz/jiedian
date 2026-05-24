@@ -37,6 +37,7 @@ export default function HomeView({ user, token, onViewChange }: HomeViewProps) {
   const [showDetail, setShowDetail] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [siteIntro, setSiteIntro] = useState('');
+  const [siteName, setSiteName] = useState('');
 
   /* ---- 支付方式选择 ---- */
   const [showPaySelect, setShowPaySelect] = useState(false);
@@ -49,6 +50,7 @@ export default function HomeView({ user, token, onViewChange }: HomeViewProps) {
   useEffect(() => {
     fetch('/api/settings').then(r => r.json()).then(d => {
       if (d.success && d.data.siteIntro) setSiteIntro(d.data.siteIntro);
+      if (d.success && d.data.siteName) setSiteName(d.data.siteName);
     }).catch(() => {});
   }, []);
 
@@ -145,9 +147,9 @@ export default function HomeView({ user, token, onViewChange }: HomeViewProps) {
           <div className="flex items-start gap-3">
             <span className="text-xl shrink-0 mt-0.5">✦</span>
             <div>
-              <h2 className="text-base sm:text-lg font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">维度光年科技</h2>
+              <h2 className="text-base sm:text-lg font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">{siteName || 'NodeHub'}</h2>
               <p className="text-xs sm:text-sm text-neutral-400 leading-relaxed mt-2">
-                {siteIntro || '维度光年科技致力于解决电商外贸传媒直播行业真实性问题以及网络账号体现等全流程服务'}
+                {siteIntro || '全栈代理分销管理系统，支持多级代理、节点自动分配、佣金自动结算。'}
               </p>
             </div>
           </div>
