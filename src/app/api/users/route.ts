@@ -194,6 +194,37 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: true, message: '充值成功', data: { role: targetRole } });
     }
 
+    // 忘记密码 - 验证账号和邮箱
+    if (action === 'FORGOT_PASSWORD') {
+      const { username, email } = body;
+      if (!username || !email) {
+        return NextResponse.json({ success: false, error: '请填写账号和邮箱' }, { status: 400 });
+      }
+      const target = await prisma.user.findUnique({ where: { username } });
+      if (!target || target.securityCode !== email) {
+        return NextResponse.json({ success: false, error: '账号或邮箱不匹配' }, { status: 400 });
+      }
+      return NextResponse.json({ success: true, message: '验证通过' });
+    }
+
+    // 重置密码
+    if (action === 'RESET_PASSWORD') {
+      const { username, email, newPassword } = body;
+      if (!username || !email || !newPassword) {
+        return NextResponse.json({ success: false, error: '请填写完整信息' }, { status: 400 });
+      }
+      if (newPassword.length < 4) {
+        return NextResponse.json({ success: false, error: '新密码至少4位' }, { status: 400 });
+      }
+      const target = await prisma.user.findUnique({ where: { username } });
+      if (!target || target.securityCode !== email) {
+        return NextResponse.json({ success: false, error: '账号或邮箱不匹配' }, { status: 400 });
+      }
+      const hashed = bcrypt.hashSync(newPassword, 10);
+      await prisma.user.update({ where: { id: target.id }, data: { password: hashed } });
+      return NextResponse.json({ success: true, message: '密码已重置，请重新登录' });
+    }
+
     return NextResponse.json({ success: false, error: '未知操作' }, { status: 400 });
   } catch (err: any) {
     console.error('[users]', err);

@@ -15,7 +15,6 @@ const api = (token: string) => ({
 const PAY_METHODS = [
   { key: 'alipay', label: '支付宝', desc: '扫码 / 网页支付' },
   { key: 'wxpay', label: '微信支付', desc: '扫码 / JSAPI' },
-  { key: 'sandbox', label: '模拟支付', desc: '演示环境，免真实付费' },
 ];
 
 const CATEGORIES: { key: ProductCategory | 'ALL'; label: string }[] = [
@@ -516,7 +515,7 @@ export default function HomeView({ user, token, onViewChange }: HomeViewProps) {
                           onClick={() => { setShowPaySelect(false); handleOrder(pendingProductId, m.key); }}
                           className="w-full bg-black border border-white/[0.08] rounded-xl p-4 flex items-center gap-4 hover:border-blue-500/30 transition-all duration-200 active:scale-[0.98] text-left"
                         >
-                          <span className="text-2xl">{m.key === 'alipay' ? '🔵' : m.key === 'wxpay' ? '🟢' : '🟡'}</span>
+                          <span className="text-2xl">{m.key === 'alipay' ? '🔵' : '🟢'}</span>
                           <div>
                             <div className="text-sm font-semibold text-white">{m.label}</div>
                             <div className="text-xs text-neutral-500 mt-0.5">{m.desc}</div>
