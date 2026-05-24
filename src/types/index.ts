@@ -202,3 +202,15 @@ export interface ApiResponse<T = unknown> {
   error?: string;
   message?: string;
 }
+
+// JWT payload
+export interface JwtPayload {
+  userId: string;
+  username: string;
+  role: Role;
+  iat?: number;
+  exp?: number;
+}
+
+// 页面视图
+export type View = 'auth' | 'home' | 'agent' | 'admin' | 'profile' | 'services';
