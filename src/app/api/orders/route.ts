@@ -109,12 +109,12 @@ export async function POST(request: Request) {
           },
         });
 
-        // 分销返佣
-        if (user.role === 'SUB_AGENT' && user.parentId) {
+        // 推荐返佣：通过邀请链接注册的用户购买后，上级获得返佣
+        if (user.parentId) {
           const parent = await tx.user.findUnique({ where: { id: user.parentId } });
-          if (parent && parent.role === 'AGENT') {
+          if (parent) {
             const rebateSetting = await tx.siteSetting.findUnique({ where: { key: 'rebateRate' } });
-            const rebateRate = (parseFloat(rebateSetting?.value || '15')) / 100;
+            const rebateRate = (parseFloat(rebateSetting?.value || '20')) / 100;
             const commission = finalPrice * rebateRate;
             await tx.user.update({
               where: { id: parent.id },
@@ -127,7 +127,7 @@ export async function POST(request: Request) {
                 type: 'DISTRIBUTE_REBATE',
                 walletType: 'COMMISSION',
                 amount: commission,
-                remark: `分销返佣（${(rebateRate * 100).toFixed(0)}%）：子代理 ${user.username} 购买 ${product.title}`,
+                remark: `推荐返佣（${(rebateRate * 100).toFixed(0)}%）：${user.username} 购买 ${product.title}`,
               },
             });
           }

@@ -191,33 +191,6 @@ export async function POST(request: Request) {
         },
       });
 
-      // 招商返佣：用户通过代理邀请码注册后首次充值>=3000升级为子代理
-      if (user.parentId && amount >= 3000 && user.role === 'USER') {
-        const parent = await prisma.user.findUnique({ where: { id: user.parentId } });
-        if (parent && parent.role === 'AGENT') {
-          await prisma.user.update({
-            where: { id: userId },
-            data: { role: 'SUB_AGENT' },
-          });
-          const recruitSetting = await prisma.siteSetting.findUnique({ where: { key: 'recruitRate' } });
-          const recruitRate = (parseFloat(recruitSetting?.value || '25')) / 100;
-          const reward = amount * recruitRate;
-          await prisma.user.update({
-            where: { id: parent.id },
-            data: { commissionBalance: { increment: reward } },
-          });
-          await prisma.transactionHistory.create({
-            data: {
-              userId: parent.id,
-              type: 'AGENT_REWARD',
-              walletType: 'COMMISSION',
-              amount: reward,
-              remark: `招商奖励（${(recruitRate * 100).toFixed(0)}%）：${user.username} 充值升级，返佣 ￥${reward.toFixed(2)}`,
-            },
-          });
-        }
-      }
-
       return NextResponse.json({ success: true, message: '充值成功', data: { role: targetRole } });
     }
 

@@ -155,7 +155,7 @@ export default function ProfileView({ user, token }: ProfileViewProps) {
               <span className="text-xs text-blue-400 font-medium">推荐链接</span>
               <span className="text-[10px] text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded-full font-semibold">推荐奖励 {rebateRate}%</span>
             </div>
-            <p className="text-[11px] text-neutral-500 mb-3">分享此链接，新用户注册并消费后，你将获得 {rebateRate}% 返佣</p>
+            <p className="text-[11px] text-neutral-500 mb-3">分享此链接，对方注册并购买后，你将获得 {rebateRate}% 返佣</p>
             <div className="flex gap-2">
               <code className="flex-1 bg-black rounded-lg px-3 py-2 text-xs text-blue-300 font-mono truncate">{inviteUrl}</code>
               <button onClick={() => copy(inviteUrl)} className="bg-blue-500/20 text-blue-300 px-3 py-1.5 rounded-lg text-xs hover:bg-blue-500/30 transition shrink-0">

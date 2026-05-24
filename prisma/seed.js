@@ -170,7 +170,6 @@ async function main() {
     { key: 'siteName', value: 'NodeHub' },
     { key: 'footerText', value: '© 2026 NodeHub. All rights reserved.' },
     { key: 'rebateRate', value: '20' },
-    { key: 'recruitRate', value: '25' },
     { key: 'withdrawMin', value: '100' },
   ];
   for (const s of defaultSettings) {
