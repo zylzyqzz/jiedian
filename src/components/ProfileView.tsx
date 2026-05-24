@@ -45,6 +45,16 @@ export default function ProfileView({ user, token }: ProfileViewProps) {
   const [services, setServices] = useState<NodeBrief[]>([]);
   const [refLink, setRefLink] = useState('');
   const [rebateRate, setRebateRate] = useState('20');
+  const [withdrawMin, setWithdrawMin] = useState('100');
+
+  // 提现
+  const [withdrawModal, setWithdrawModal] = useState(false);
+  const [wdName, setWdName] = useState('');
+  const [wdPhone, setWdPhone] = useState('');
+  const [wdAmount, setWdAmount] = useState('');
+  const [wdErr, setWdErr] = useState('');
+  const [wdOk, setWdOk] = useState('');
+  const [wdLoading, setWdLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<'orders' | 'tx' | 'services'>('services');
   const [expandedSvc, setExpandedSvc] = useState<number | null>(null);
   const [copyIdx, setCopyIdx] = useState<number | null>(null);
@@ -77,6 +87,7 @@ export default function ProfileView({ user, token }: ProfileViewProps) {
   useEffect(() => {
     fetch('/api/settings').then(r => r.json()).then(d => {
       if (d.success && d.data.rebateRate) setRebateRate(d.data.rebateRate);
+      if (d.success && d.data.withdrawMin) setWithdrawMin(d.data.withdrawMin);
     }).catch(() => {});
   }, []);
 
@@ -98,6 +109,27 @@ export default function ProfileView({ user, token }: ProfileViewProps) {
   };
   const copyAll = (s: NodeBrief) => {
     navigator.clipboard.writeText(`协议: ${s.protocol}\n地址: ${s.host}\n端口: ${s.port}\n密码: ${s.password}`);
+  };
+
+  const handleWithdraw = async () => {
+    setWdErr(''); setWdOk('');
+    if (!wdName.trim()) { setWdErr('请输入真实姓名'); return; }
+    if (!wdPhone.trim()) { setWdErr('请输入手机号'); return; }
+    const amt = parseFloat(wdAmount);
+    if (isNaN(amt) || amt <= 0) { setWdErr('请输入有效提现金额'); return; }
+    if (amt < parseFloat(withdrawMin)) { setWdErr(`最低提现金额为 ¥${withdrawMin}`); return; }
+    setWdLoading(true);
+    try {
+      const res = await fetch('/api/agent', {
+        method: 'POST', ...api(token),
+        body: JSON.stringify({ action: 'WITHDRAW', amount: amt, realName: wdName, phone: wdPhone, remark: '佣金提现' }),
+      });
+      const d = await res.json();
+      if (!d.success) { setWdErr(d.error); return; }
+      setWdOk(d.message || '提现申请已提交');
+      setWdName(''); setWdPhone(''); setWdAmount('');
+    } catch { setWdErr('网络错误'); }
+    finally { setWdLoading(false); }
   };
 
   const inviteUrl = refLink ? `${window.location.origin}/${refLink}` : '';
@@ -143,8 +175,19 @@ export default function ProfileView({ user, token }: ProfileViewProps) {
             <div className="text-xl sm:text-2xl font-mono font-bold">￥{user.balance.toFixed(2)}</div>
           </div>
           <div className="bg-[#0A0A0A] p-5 sm:p-6">
-            <div className="text-[10px] text-neutral-500 mb-1">📊 佣金</div>
+            <div className="flex items-center justify-between mb-1">
+              <span className="text-[10px] text-neutral-500">📊 佣金</span>
+              {user.commissionBalance >= parseFloat(withdrawMin) && (
+                <button onClick={() => setWithdrawModal(true)}
+                  className="text-[10px] text-amber-400 hover:text-amber-300 bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20 transition">
+                  提现
+                </button>
+              )}
+            </div>
             <div className="text-xl sm:text-2xl font-mono font-bold text-emerald-400">￥{user.commissionBalance.toFixed(2)}</div>
+            {user.commissionBalance > 0 && user.commissionBalance < parseFloat(withdrawMin) && (
+              <p className="text-[10px] text-neutral-600 mt-1">满 ¥{withdrawMin} 可提现</p>
+            )}
           </div>
         </div>
 
@@ -349,6 +392,57 @@ export default function ProfileView({ user, token }: ProfileViewProps) {
             <div className="flex gap-2 pt-2">
               <button onClick={() => setPwdModal(false)} className="flex-1 border border-white/10 text-neutral-400 py-2 rounded-xl text-xs hover:text-white transition">取消</button>
               <button onClick={handleChangePwd} className="flex-1 bg-white text-black py-2 rounded-xl text-xs font-semibold hover:bg-neutral-200 transition">确认修改</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ====== 提现弹窗 ====== */}
+      {withdrawModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4"
+          onClick={() => { if (!wdLoading) setWithdrawModal(false); }}>
+          <div className="bg-[#0a0b0d] border border-white/[0.08] w-full max-w-sm rounded-2xl p-6 shadow-2xl"
+            onClick={e => e.stopPropagation()}>
+            <h3 className="text-lg font-bold text-white mb-1">佣金提现</h3>
+            <p className="text-xs text-neutral-500 mb-5">最低提现金额 <span className="text-amber-400 font-semibold">¥{withdrawMin}</span></p>
+
+            <div className="space-y-3">
+              <input
+                placeholder="支付宝真实姓名"
+                value={wdName}
+                onChange={e => setWdName(e.target.value)}
+                className="w-full bg-black border border-white/[0.08] rounded-xl px-4 py-3 text-sm text-white placeholder:text-neutral-600 focus:border-amber-500/50 focus:outline-none"
+              />
+              <input
+                placeholder="手机号"
+                value={wdPhone}
+                onChange={e => setWdPhone(e.target.value)}
+                className="w-full bg-black border border-white/[0.08] rounded-xl px-4 py-3 text-sm text-white placeholder:text-neutral-600 focus:border-amber-500/50 focus:outline-none"
+              />
+              <div>
+                <input
+                  type="number"
+                  placeholder="提现金额"
+                  value={wdAmount}
+                  onChange={e => setWdAmount(e.target.value)}
+                  className="w-full bg-black border border-white/[0.08] rounded-xl px-4 py-3 text-sm text-white placeholder:text-neutral-600 focus:border-amber-500/50 focus:outline-none"
+                />
+                <p className="text-[10px] text-neutral-600 mt-1.5">可提现佣金 ¥{user.commissionBalance.toFixed(2)}</p>
+              </div>
+            </div>
+
+            {wdErr && <p className="text-xs text-red-400 mt-3">{wdErr}</p>}
+            {wdOk && <p className="text-xs text-emerald-400 mt-3">{wdOk}</p>}
+
+            <div className="flex gap-3 mt-5">
+              <button onClick={() => { if (!wdLoading) setWithdrawModal(false); }}
+                className="flex-1 border border-white/[0.08] py-2.5 rounded-xl text-sm text-neutral-400 hover:text-white transition-all">
+                取消
+              </button>
+              <button onClick={handleWithdraw} disabled={wdLoading}
+                className="flex-1 bg-amber-500 hover:bg-amber-600 text-black py-2.5 rounded-xl text-sm font-semibold transition-all disabled:opacity-50 active:scale-[0.98]">
+                {wdLoading ? '提交中...' : '确认提现'}
+              </button>
             </div>
           </div>
         </div>

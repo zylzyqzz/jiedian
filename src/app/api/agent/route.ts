@@ -77,13 +77,13 @@ export async function GET(request: Request) {
 /* ========== POST：佣金提现申请 ========== */
 export async function POST(request: Request) {
   try {
-    const session = await requireAgent(request);
+    const session = await requireAuth(request);
     if (!session) {
-      return NextResponse.json({ success: false, error: '未授权' }, { status: 403 });
+      return NextResponse.json({ success: false, error: '请先登录' }, { status: 401 });
     }
 
     const body = await request.json();
-    const { action, amount, remark } = body;
+    const { action, amount, remark, realName, phone } = body;
 
     if (action === 'WITHDRAW') {
       const parsed = withdrawSchema.safeParse({ amount, remark });
@@ -103,6 +103,12 @@ export async function POST(request: Request) {
         return NextResponse.json({ success: false, error: `最低提现金额为 ￥${withdrawMin}` }, { status: 400 });
       }
 
+      const remarkText = [
+        remark || '佣金提现申请',
+        realName ? `姓名: ${realName}` : '',
+        phone ? `手机: ${phone}` : '',
+      ].filter(Boolean).join('，');
+
       await prisma.$transaction([
         prisma.user.update({
           where: { id: session.userId },
@@ -114,12 +120,12 @@ export async function POST(request: Request) {
             type: 'WITHDRAW',
             walletType: 'COMMISSION',
             amount,
-            remark: remark || '佣金提现申请',
+            remark: remarkText,
           },
         }),
       ]);
 
-      return NextResponse.json({ success: true, message: '提现申请已提交' });
+      return NextResponse.json({ success: true, message: '提现申请已提交，客服会尽快处理' });
     }
 
     return NextResponse.json({ success: false, error: '未知操作' }, { status: 400 });
