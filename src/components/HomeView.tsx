@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { UserBrief, Product, OrderItem, ProductCategory } from '@/types';
 
 interface HomeViewProps {
@@ -33,6 +33,7 @@ export default function HomeView({ user, token, onViewChange }: HomeViewProps) {
   const [orderErr, setOrderErr] = useState('');
   const [loading, setLoading] = useState(false);
   const [assignedNode, setAssignedNode] = useState<any>(null);
+  const gridRef = useRef<HTMLDivElement>(null);
 
   /* ---- 支付方式选择 ---- */
   const [showPaySelect, setShowPaySelect] = useState(false);
@@ -58,6 +59,21 @@ export default function HomeView({ user, token, onViewChange }: HomeViewProps) {
     fetchProducts();
     if (activeTab === 'orders') fetchOrders();
   }, [fetchProducts, fetchOrders, activeTab]);
+
+  /* ---- Scroll Reveal ---- */
+  useEffect(() => {
+    if (activeTab !== 'products') return;
+    const timer = setTimeout(() => {
+      const observer = new IntersectionObserver(entries => {
+        entries.forEach(e => {
+          if (e.isIntersecting) e.target.classList.add('revealed');
+        });
+      }, { threshold: 0.1 });
+      document.querySelectorAll('.card-reveal').forEach(el => observer.observe(el));
+      return () => observer.disconnect();
+    }, 100);
+    return () => clearTimeout(timer);
+  }, [products, activeTab, category]);
 
   const handleOrder = async (productId: string, paymentType: string) => {
     setOrderErr('');
@@ -99,8 +115,16 @@ export default function HomeView({ user, token, onViewChange }: HomeViewProps) {
 
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8">
+      {/* ====== CSS 动画 ====== */}
+      <style>{`
+        @keyframes fadeInUp { from { opacity:0; transform:translateY(24px); } to { opacity:1; transform:translateY(0); } }
+        .card-reveal { opacity:0; transform:translateY(24px); transition: opacity .6s cubic-bezier(.25,.46,.45,.94), transform .6s cubic-bezier(.25,.46,.45,.94); }
+        .card-reveal.revealed { opacity:1; transform:translateY(0); }
+        .hover-glow:hover { box-shadow: 0 0 30px -8px rgba(255,255,255,.08); }
+      `}</style>
+
       {/* 欢迎横幅 */}
-      <div className="bg-[#0A0A0A] border border-white/5 rounded-2xl p-6 mb-8">
+      <div className="card-reveal bg-gradient-to-br from-[#111] to-[#0A0A0A] border border-white/5 rounded-2xl p-6 mb-8">
         <h2 className="text-xl font-bold mb-1">欢迎，{user.username}</h2>
         <div className="flex flex-wrap gap-4 text-sm text-neutral-400">
           <span>余额：<span className="text-white font-mono">￥{user.balance.toFixed(2)}</span></span>
@@ -109,26 +133,26 @@ export default function HomeView({ user, token, onViewChange }: HomeViewProps) {
         </div>
         <button
           onClick={() => onViewChange('services')}
-          className="mt-4 bg-blue-500/10 border border-blue-500/20 text-blue-400 px-4 py-2 rounded-xl text-xs font-semibold hover:bg-blue-500/20 transition inline-flex items-center gap-2"
+          className="mt-4 bg-blue-500/10 border border-blue-500/20 text-blue-400 px-4 py-2 rounded-xl text-xs font-semibold hover:bg-blue-500/20 transition-all duration-300 active:scale-95 inline-flex items-center gap-2"
         >
           <span>📡</span> 我的节点服务
         </button>
       </div>
 
       {/* Tab 切换 */}
-      <div className="flex gap-2 mb-6">
+      <div className="flex gap-2 mb-6 card-reveal">
         <button
           onClick={() => setActiveTab('products')}
-          className={`px-4 py-2 rounded-xl text-xs font-semibold transition ${
-            activeTab === 'products' ? 'bg-white text-black' : 'border border-white/10 text-neutral-400 hover:text-white'
+          className={`px-4 py-2 rounded-xl text-xs font-semibold transition-all duration-300 ${
+            activeTab === 'products' ? 'bg-white text-black' : 'border border-white/10 text-neutral-400 hover:text-white hover:border-white/30'
           }`}
         >
           节点商品
         </button>
         <button
           onClick={() => setActiveTab('orders')}
-          className={`px-4 py-2 rounded-xl text-xs font-semibold transition ${
-            activeTab === 'orders' ? 'bg-white text-black' : 'border border-white/10 text-neutral-400 hover:text-white'
+          className={`px-4 py-2 rounded-xl text-xs font-semibold transition-all duration-300 ${
+            activeTab === 'orders' ? 'bg-white text-black' : 'border border-white/10 text-neutral-400 hover:text-white hover:border-white/30'
           }`}
         >
           我的订单 ({orders.length})
@@ -139,15 +163,15 @@ export default function HomeView({ user, token, onViewChange }: HomeViewProps) {
       {activeTab === 'products' && (
         <div>
           {/* 分类 Tab */}
-          <div className="flex gap-2 mb-4">
+          <div className="flex gap-2 mb-4 flex-wrap card-reveal">
             {CATEGORIES.map(c => (
               <button
                 key={c.key}
                 onClick={() => setCategory(c.key)}
-                className={`px-3 py-1.5 rounded-lg text-[10px] font-semibold transition ${
+                className={`px-3 py-1.5 rounded-lg text-[10px] font-semibold transition-all duration-300 active:scale-95 ${
                   category === c.key
                     ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30'
-                    : 'border border-white/10 text-neutral-500 hover:text-white'
+                    : 'border border-white/10 text-neutral-500 hover:text-white hover:border-white/30'
                 }`}
               >
                 {c.label}
@@ -155,36 +179,48 @@ export default function HomeView({ user, token, onViewChange }: HomeViewProps) {
             ))}
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {products.map(p => (
-              <div key={p.id} className="bg-[#0A0A0A] border border-white/10 rounded-2xl p-4 flex flex-col gap-3 hover:border-white/20 transition">
-                {p.image && (
-                  <div className="w-full h-32 rounded-xl bg-neutral-800 overflow-hidden">
-                    <img src={p.image} alt={p.title} className="w-full h-full object-cover" onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }} />
-                  </div>
-                )}
-                <div>
-                  <div className="flex items-center gap-2">
-                    <h3 className="font-bold text-sm">{p.title}</h3>
-                    <span className={`text-[9px] px-1.5 py-0.5 rounded ${
-                      p.category === 'LIVE'
-                        ? 'bg-red-500/10 text-red-400 border border-red-500/20'
-                        : 'bg-blue-500/10 text-blue-400 border border-blue-500/20'
-                    }`}>
-                      {p.category === 'LIVE' ? '直播' : '通用'}
-                    </span>
-                  </div>
-                  <p className="text-[10px] text-neutral-500 mt-1 line-clamp-2">{p.description}</p>
+          <div ref={gridRef} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+            {products.map((p, i) => (
+              <div
+                key={p.id}
+                className="group card-reveal bg-[#0A0A0A] border border-white/5 rounded-2xl flex flex-col overflow-hidden transition-all duration-500 hover:border-white/20 hover-glow"
+                style={{ animation: `fadeInUp .5s ease ${i * 0.06}s both` }}
+              >
+                {/* 图片区域 */}
+                <div className="relative h-40 overflow-hidden bg-neutral-900">
+                  {p.image ? (
+                    <img src={p.image} alt={p.title} loading="lazy"
+                      className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-105" />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-neutral-600">📡</div>
+                  )}
+                  {/* 渐变叠加 */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-[#0A0A0A] via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+
+                  {/* 分类标签 */}
+                  <span className={`absolute top-3 left-3 text-[9px] px-2 py-0.5 rounded-full font-semibold backdrop-blur-[4px] transition-all duration-300 group-hover:scale-105 ${
+                    p.category === 'LIVE'
+                      ? 'bg-red-500/20 text-red-400 border border-red-500/30'
+                      : 'bg-blue-500/20 text-blue-400 border border-blue-500/30'
+                  }`}>
+                    {p.category === 'LIVE' ? '📡 直播专线' : '🌐 非直播专线'}
+                  </span>
                 </div>
-                <div className="flex justify-between items-center mt-auto">
-                  <span className="text-lg font-mono font-bold">￥{p.price}</span>
-                  <button
-                    onClick={() => openPaySelect(p.id)}
-                    disabled={loading}
-                    className="bg-white text-black hover:bg-neutral-200 transition px-4 py-2 rounded-xl text-xs font-semibold disabled:opacity-50"
-                  >
-                    {loading ? '处理中...' : '立即购买'}
-                  </button>
+
+                {/* 信息区域 */}
+                <div className="p-4 flex flex-col gap-2 flex-1">
+                  <h3 className="font-bold text-sm text-white transition-colors duration-300 group-hover:text-blue-400">{p.title}</h3>
+                  <p className="text-[10px] text-neutral-500 leading-relaxed line-clamp-2 flex-1">{p.description}</p>
+                  <div className="flex justify-between items-center pt-2 border-t border-white/5 mt-auto">
+                    <span className="text-lg font-mono font-bold transition-all duration-300 group-hover:text-emerald-400">￥{p.price}</span>
+                    <button
+                      onClick={() => openPaySelect(p.id)}
+                      disabled={loading}
+                      className="bg-white text-black hover:bg-neutral-200 transition-all duration-300 px-4 py-2 rounded-xl text-xs font-semibold disabled:opacity-50 active:scale-90"
+                    >
+                      {loading ? '处理中...' : '立即购买'}
+                    </button>
+                  </div>
                 </div>
               </div>
             ))}
@@ -195,10 +231,10 @@ export default function HomeView({ user, token, onViewChange }: HomeViewProps) {
       {/* 支付方式选择弹窗 */}
       {showPaySelect && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
-          <div className="bg-[#0A0A0A] border border-white/10 w-full max-w-sm rounded-2xl p-6 shadow-2xl space-y-4">
+          <div className="card-reveal revealed bg-[#0A0A0A] border border-white/10 w-full max-w-sm rounded-2xl p-6 shadow-2xl space-y-4">
             <div className="flex justify-between items-center">
               <h3 className="text-sm font-bold">选择支付方式</h3>
-              <button onClick={() => setShowPaySelect(false)} className="text-neutral-500 hover:text-white text-lg">&times;</button>
+              <button onClick={() => setShowPaySelect(false)} className="text-neutral-500 hover:text-white transition-colors text-lg">&times;</button>
             </div>
 
             {(user.role === 'AGENT' || user.role === 'SUB_AGENT') ? (
@@ -206,7 +242,7 @@ export default function HomeView({ user, token, onViewChange }: HomeViewProps) {
                 <p className="text-[10px] text-neutral-400">代理/子代理使用余额直扣，无需选择支付方式</p>
                 <button
                   onClick={() => { setShowPaySelect(false); handleOrder(pendingProductId, 'balance'); }}
-                  className="w-full bg-white text-black py-3 rounded-xl text-sm font-semibold hover:bg-neutral-200 transition"
+                  className="w-full bg-white text-black py-3 rounded-xl text-sm font-semibold hover:bg-neutral-200 transition-all duration-300 active:scale-95"
                 >
                   💰 余额支付（￥{products.find(p => p.id === pendingProductId)?.price || 0}）
                 </button>
@@ -217,7 +253,7 @@ export default function HomeView({ user, token, onViewChange }: HomeViewProps) {
                   <button
                     key={m.key}
                     onClick={() => { setShowPaySelect(false); handleOrder(pendingProductId, m.key); }}
-                    className="w-full bg-black border border-white/10 rounded-xl p-3 flex items-center gap-3 hover:border-white/30 transition text-left"
+                    className="w-full bg-black border border-white/10 rounded-xl p-3 flex items-center gap-3 hover:border-white/30 transition-all duration-300 active:scale-[0.98] text-left"
                   >
                     <span className="text-2xl">{m.icon}</span>
                     <div>
@@ -236,10 +272,11 @@ export default function HomeView({ user, token, onViewChange }: HomeViewProps) {
       {activeTab === 'orders' && (
         <div className="space-y-2">
           {orders.length === 0 && (
-            <div className="text-center text-neutral-500 py-12">暂无订单</div>
+            <div className="card-reveal text-center text-neutral-500 py-12">暂无订单</div>
           )}
-          {orders.map(o => (
-            <div key={o.id} className="bg-[#0A0A0A] border border-white/5 rounded-lg px-4 py-3 flex justify-between items-center">
+          {orders.map((o, i) => (
+            <div key={o.id} className="card-reveal bg-[#0A0A0A] border border-white/5 rounded-lg px-4 py-3 flex justify-between items-center hover:border-white/20 transition-all duration-300"
+              style={{ animation: `fadeInUp .4s ease ${i * 0.05}s both` }}>
               <div>
                 <div className="text-sm text-white">{o.productTitle}</div>
                 <div className="text-[10px] text-neutral-500 mt-0.5">
@@ -264,7 +301,7 @@ export default function HomeView({ user, token, onViewChange }: HomeViewProps) {
       {/* 结果弹窗 */}
       {payModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
-          <div className="bg-[#0A0A0A] border border-white/10 w-full max-w-sm rounded-2xl p-6 shadow-2xl text-center space-y-4">
+          <div className="card-reveal revealed bg-[#0A0A0A] border border-white/10 w-full max-w-sm rounded-2xl p-6 shadow-2xl text-center space-y-4">
             <div className="text-4xl">{orderErr ? '❌' : '✅'}</div>
             <p className={orderErr ? 'text-red-400 text-sm' : 'text-emerald-400 text-sm'}>
               {orderErr || orderMsg}
@@ -287,7 +324,7 @@ export default function HomeView({ user, token, onViewChange }: HomeViewProps) {
                       `协议: ${assignedNode.protocol}\n地址: ${assignedNode.host}\n端口: ${assignedNode.port}\n密码: ${assignedNode.password}`
                     );
                   }}
-                  className="mt-2 w-full bg-neutral-800 border border-white/10 text-white rounded-lg py-2 text-[10px] hover:bg-neutral-700 transition"
+                  className="mt-2 w-full bg-neutral-800 border border-white/10 text-white rounded-lg py-2 text-[10px] hover:bg-neutral-700 transition-all duration-300 active:scale-95"
                 >
                   📋 一键复制连接信息
                 </button>
@@ -296,7 +333,7 @@ export default function HomeView({ user, token, onViewChange }: HomeViewProps) {
 
             <button
               onClick={() => setPayModal(false)}
-              className="mt-2 bg-white text-black px-6 py-2 rounded-xl text-xs font-semibold hover:bg-neutral-200 transition"
+              className="mt-2 bg-white text-black px-6 py-2 rounded-xl text-xs font-semibold hover:bg-neutral-200 transition-all duration-300 active:scale-95"
             >
               确定
             </button>
