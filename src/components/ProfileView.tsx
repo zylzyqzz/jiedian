@@ -46,6 +46,8 @@ export default function ProfileView({ user, token }: ProfileViewProps) {
   const [refLink, setRefLink] = useState('');
   const [rebateRate, setRebateRate] = useState('20');
   const [withdrawMin, setWithdrawMin] = useState('100');
+  const [contactInfo, setContactInfo] = useState('');
+  const [showRecharge, setShowRecharge] = useState(false);
 
   // 提现
   const [withdrawModal, setWithdrawModal] = useState(false);
@@ -90,6 +92,7 @@ export default function ProfileView({ user, token }: ProfileViewProps) {
       // 根据自身角色读取返佣比例
       const rateKey = user.role === 'AGENT' ? 'agentRebateRate' : 'userRebateRate';
       if (d.success && d.data[rateKey]) setRebateRate(d.data[rateKey]);
+      if (d.success && d.data.contactInfo) setContactInfo(d.data.contactInfo);
     }).catch(() => {});
   }, []);
 
@@ -191,6 +194,18 @@ export default function ProfileView({ user, token }: ProfileViewProps) {
               <p className="text-[10px] text-neutral-600 mt-1">满 ¥{withdrawMin} 可提现</p>
             )}
           </div>
+        </div>
+
+        {/* 操作按钮 */}
+        <div className="grid grid-cols-2 gap-3 p-5 sm:p-6">
+          <button onClick={() => setShowRecharge(true)}
+            className="py-2.5 rounded-xl text-sm font-semibold bg-white text-black hover:bg-neutral-100 transition-all active:scale-[0.98]">
+            充值
+          </button>
+          <button onClick={() => setWithdrawModal(true)}
+            className="py-2.5 rounded-xl text-sm font-semibold bg-amber-500 text-black hover:bg-amber-600 transition-all active:scale-[0.98]">
+            佣金提现
+          </button>
         </div>
 
         {/* 邀请链接 */}
@@ -451,6 +466,30 @@ export default function ProfileView({ user, token }: ProfileViewProps) {
                 {wdLoading ? '提交中...' : '确认提现'}
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* ====== 充值联系客服弹窗 ====== */}
+      {showRecharge && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4"
+          onClick={() => setShowRecharge(false)}>
+          <div className="bg-[#0a0b0d] border border-white/[0.08] w-full max-w-sm rounded-2xl p-6 shadow-2xl text-center"
+            onClick={e => e.stopPropagation()}>
+            <span className="text-4xl">💰</span>
+            <h3 className="text-lg font-bold text-white mt-3 mb-2">账户充值</h3>
+            <p className="text-sm text-neutral-400 mb-5">请联系客服完成充值，到账后即可购买服务</p>
+            {contactInfo ? (
+              <div className="bg-white/[0.02] border border-white/[0.05] rounded-xl p-4 mb-5">
+                <p className="text-sm text-neutral-300 whitespace-pre-line">{contactInfo}</p>
+              </div>
+            ) : (
+              <p className="text-sm text-neutral-600 mb-5">客服联系方式暂未设置</p>
+            )}
+            <button onClick={() => setShowRecharge(false)}
+              className="w-full py-2.5 bg-white text-black rounded-xl text-sm font-semibold hover:bg-neutral-100 transition-all">
+              确定
+            </button>
           </div>
         </div>
       )}
