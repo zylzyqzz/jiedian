@@ -14,7 +14,7 @@ const SETTING_KEYS = [
   { key: 'siteName', label: '站点名称', type: 'text', placeholder: 'NodeHub' },
   { key: 'contactInfo', label: '联系方式', type: 'text', placeholder: '客服微信 / 邮箱等' },
   { key: 'footerText', label: '页脚文字', type: 'text', placeholder: '© 2026 NodeHub. All rights reserved.' },
-  { key: 'agentRebateRate', label: '会员推荐返佣比例 (%)', type: 'number', placeholder: '20' },
+  { key: 'agentRebateRate', label: '代理推荐返佣比例 (%)', type: 'number', placeholder: '20' },
   { key: 'userRebateRate', label: '个人推荐返佣比例 (%)', type: 'number', placeholder: '10' },
   { key: 'withdrawMin', label: '最低提现金额 (元)', type: 'number', placeholder: '100' },
 ];
