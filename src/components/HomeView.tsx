@@ -227,20 +227,7 @@ export default function HomeView({ user, token, onViewChange }: HomeViewProps) {
                       )}
                     </div>
 
-                    <div className="space-y-2.5 mb-6 py-5 border-y border-white/[0.04]">
-                      {[
-                        { label: 'CPU', value: '1 核' },
-                        { label: '内存', value: '1 GB' },
-                        { label: 'SSD 硬盘', value: '20 GB' },
-                        { label: '月流量', value: '500 GB' },
-                        { label: 'IP', value: '独立公网 IPv4' },
-                      ].map(spec => (
-                        <div key={spec.label} className="flex items-center justify-between text-sm">
-                          <span className="text-neutral-500">{spec.label}</span>
-                          <span className="text-neutral-200 font-medium">{spec.value}</span>
-                        </div>
-                      ))}
-                    </div>
+                    <p className="text-sm text-neutral-400 leading-relaxed mb-6 py-5 border-y border-white/[0.04] line-clamp-3">{p.description}</p>
 
                     <div className="flex items-end justify-between">
                       <div>
