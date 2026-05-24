@@ -43,7 +43,7 @@ export default function App() {
     localStorage.setItem(USER_KEY, JSON.stringify(newUser));
 
     if (newUser.role === 'ADMIN') setView('admin');
-    else if (newUser.role === 'AGENT' || newUser.role === 'SUB_AGENT') setView('home');
+    else if (newUser.role === 'AGENT') setView('home');
     else setView('home');
   };
 
@@ -90,7 +90,7 @@ export default function App() {
         <AdminView token={token} />
       )}
 
-      {view === 'agent' && user && (user.role === 'AGENT' || user.role === 'SUB_AGENT') && token && (
+      {view === 'agent' && user && user.role === 'AGENT' && token && (
         <AgentView token={token} />
       )}
 

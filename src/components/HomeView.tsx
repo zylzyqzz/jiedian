@@ -462,9 +462,9 @@ export default function HomeView({ user, token, onViewChange }: HomeViewProps) {
               <button onClick={() => setShowPaySelect(false)}
                 className="w-8 h-8 flex items-center justify-center rounded-lg text-neutral-500 hover:text-white hover:bg-white/5 transition-all text-lg">&times;</button>
             </div>
-            {(user.role === 'AGENT' || user.role === 'SUB_AGENT') ? (
+            {user.role === 'AGENT' ? (
               <div>
-                <p className="text-sm text-neutral-500 mb-4">代理 / 子代理使用余额直接扣款</p>
+                <p className="text-sm text-neutral-500 mb-4">代理使用余额直接扣款（享代理价）</p>
                 <button
                   onClick={() => { setShowPaySelect(false); handleOrder(pendingProductId, 'balance'); }}
                   className="w-full bg-blue-500 hover:bg-blue-600 text-white py-3.5 rounded-xl text-base font-semibold transition-all duration-200 active:scale-[0.98]"

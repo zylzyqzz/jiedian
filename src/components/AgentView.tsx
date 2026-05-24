@@ -182,7 +182,7 @@ export default function AgentView({ token }: AgentViewProps) {
                 <div className="flex justify-between items-start">
                   <div>
                     <span className="font-semibold text-sm">{sub.username}</span>
-                    <span className="text-[10px] text-neutral-500 ml-2">{sub.role === 'SUB_AGENT' ? '子代理' : '用户'}</span>
+                    <span className="text-[10px] text-neutral-500 ml-2">用户</span>
                     <div className="text-[10px] text-neutral-600 mt-0.5">注册于 {new Date(sub.createdAt).toLocaleDateString()}</div>
                   </div>
                   <button onClick={() => { setSelectedSub(sub); setShowPriceModal(true); setPriceError(''); setNewPrice(''); }}

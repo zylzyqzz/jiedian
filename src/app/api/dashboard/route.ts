@@ -26,7 +26,7 @@ export async function GET(request: Request) {
       assignedNodes,
     ] = await Promise.all([
       prisma.user.count(),
-      prisma.user.count({ where: { role: { in: ['AGENT', 'SUB_AGENT'] } } }),
+      prisma.user.count({ where: { role: 'AGENT' } }),
       prisma.product.count(),
       prisma.order.count(),
       prisma.order.count({ where: { status: 'PENDING' } }),

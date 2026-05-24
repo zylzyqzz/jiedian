@@ -11,8 +11,7 @@ interface NavBarProps {
 export default function NavBar({ user, token, onViewChange, onLogout }: NavBarProps) {
   const roleLabels: Record<string, { label: string; color: string }> = {
     ADMIN: { label: '管理员', color: 'bg-red-500/10 text-red-400 border-red-500/20' },
-    AGENT: { label: '一级代理', color: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' },
-    SUB_AGENT: { label: '子代理', color: 'bg-purple-500/10 text-purple-400 border-purple-500/20' },
+    AGENT: { label: '代理', color: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' },
     USER: { label: '用户', color: 'bg-blue-500/10 text-blue-400 border-blue-500/20' },
   };
 
@@ -39,7 +38,7 @@ export default function NavBar({ user, token, onViewChange, onLogout }: NavBarPr
                 个人中心
               </button>
 
-              {(user.role === 'AGENT' || user.role === 'SUB_AGENT') && (
+              {user.role === 'AGENT' && (
                 <button onClick={() => onViewChange('agent')}
                   className="text-emerald-500 hover:text-emerald-400 transition-colors duration-200">
                   代理后台

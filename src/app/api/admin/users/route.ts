@@ -183,7 +183,7 @@ export async function POST(request: Request) {
         return NextResponse.json({ success: false, error: '参数错误' }, { status: 400 });
       }
 
-      const validRoles = ['USER', 'AGENT', 'SUB_AGENT', 'ADMIN'];
+      const validRoles = ['USER', 'AGENT', 'ADMIN'];
       if (!validRoles.includes(role)) {
         return NextResponse.json({ success: false, error: '无效角色' }, { status: 400 });
       }

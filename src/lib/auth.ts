@@ -64,7 +64,7 @@ export async function requireAdmin(req: Request | NextRequest): Promise<JwtPaylo
 
 /* ========== 代理守卫（含一级代理和子代理） ========== */
 export async function requireAgent(req: Request | NextRequest): Promise<JwtPayload | null> {
-  return requireRole(req, 'AGENT', 'SUB_AGENT');
+  return requireRole(req, 'AGENT');
 }
 
 /* ========== 已登录守卫 ========== */

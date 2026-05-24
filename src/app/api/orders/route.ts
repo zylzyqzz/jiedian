@@ -67,15 +67,10 @@ export async function POST(request: Request) {
     let finalPrice = product.price;
     if (user.role === 'AGENT') {
       finalPrice = product.agentPrice;
-    } else if (user.role === 'SUB_AGENT') {
-      const cfg = await prisma.agentPriceConfig.findFirst({
-        where: { subAgentId: user.id, productId: product.id },
-      });
-      if (cfg) finalPrice = cfg.customPrice;
     }
 
     /* ---- 代理/子代理：余额直扣 + 自动分配节点 ---- */
-    if (user.role === 'AGENT' || user.role === 'SUB_AGENT') {
+    if (user.role === 'AGENT') {
       if (user.balance < finalPrice) {
         return NextResponse.json({ success: false, error: '代理余额不足，请先充值' }, { status: 400 });
       }

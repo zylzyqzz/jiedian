@@ -21,7 +21,7 @@ const api = (token: string) => ({
   headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
 });
 
-const roleLabel: Record<string, string> = { USER: '用户', AGENT: '代理', SUB_AGENT: '子代理', ADMIN: '管理员' };
+const roleLabel: Record<string, string> = { USER: '用户', AGENT: '代理', ADMIN: '管理员' };
 
 export default function AdminUsers({
   token, users, page, totalPages, search, roleFilter, statusFilter,
@@ -71,7 +71,6 @@ export default function AdminUsers({
           <option value="">全部角色</option>
           <option value="USER">用户</option>
           <option value="AGENT">代理</option>
-          <option value="SUB_AGENT">子代理</option>
           <option value="ADMIN">管理员</option>
         </select>
         <select className="bg-[#0A0A0A] border border-white/10 rounded-xl px-3 py-2 text-xs text-white"
@@ -104,7 +103,6 @@ export default function AdminUsers({
                 >
                   <option value="USER">用户</option>
                   <option value="AGENT">代理</option>
-                  <option value="SUB_AGENT">子代理</option>
                   <option value="ADMIN">管理员</option>
                 </select>
                 {u.status === 'ACTIVE' ? (

@@ -1,7 +1,7 @@
 /* ========== 统一类型定义 ========== */
 
 // 用户角色
-export type Role = 'USER' | 'SUB_AGENT' | 'AGENT' | 'ADMIN';
+export type Role = 'USER' | 'AGENT' | 'ADMIN';
 
 // 用户状态
 export type UserStatus = 'ACTIVE' | 'BANNED';

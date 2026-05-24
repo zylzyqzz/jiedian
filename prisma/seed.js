@@ -54,9 +54,9 @@ async function main() {
       username: 'subagent01',
       password: hash('sub123'),
       securityCode: hash('sub666'),
-      role: 'SUB_AGENT',
+      role: 'AGENT',
       status: 'ACTIVE',
-      balance: 2000,
+      balance: 3000,
       commissionBalance: 0,
       inviteCode: 'SUB001',
       parentId: agent.id,
@@ -160,7 +160,7 @@ async function main() {
   console.log('✅ 种子数据重置完成（含节点池）');
   console.log('   管理员:  admin / admin123 / 安全码 admin666');
   console.log('   代理:    agent01 / agent123 / 安全码 agent666');
-  console.log('   子代理:  subagent01 / sub123 / 安全码 sub666');
+  console.log('   代理2:   subagent01 / sub123 / 安全码 sub666');
   console.log('   用户:    demo / demo123 / 安全码 demo666');
   console.log('   封禁用户: banned_user / banned123');
   // 站点设置

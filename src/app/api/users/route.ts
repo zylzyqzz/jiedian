@@ -102,7 +102,7 @@ export async function POST(request: Request) {
       if (loginRole === 'ADMIN' && user.role !== 'ADMIN') {
         return NextResponse.json({ success: false, error: '非管理员账号' }, { status: 403 });
       }
-      if (loginRole === 'AGENT' && user.role !== 'AGENT' && user.role !== 'SUB_AGENT') {
+      if (loginRole === 'AGENT' && user.role !== 'AGENT') {
         return NextResponse.json({ success: false, error: '非代理账号，请先充值升级' }, { status: 403 });
       }
 
