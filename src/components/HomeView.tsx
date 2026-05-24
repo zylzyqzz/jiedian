@@ -311,6 +311,57 @@ export default function HomeView({ user, token, onViewChange }: HomeViewProps) {
         </div>
       </section>
 
+      {/* 代理加盟 */}
+      {activeTab === 'products' && (
+        <section className="max-w-6xl mx-auto px-4 sm:px-6 pb-16 sm:pb-20">
+          <div className="relative bg-gradient-to-br from-amber-500/5 via-amber-500/[0.02] to-transparent border border-amber-500/10 rounded-2xl overflow-hidden">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-amber-500/5 rounded-full blur-2xl pointer-events-none" />
+            <div className="p-6 sm:p-10 relative z-10">
+              <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
+                <div className="flex-1">
+                  <div className="flex items-center gap-3 mb-3">
+                    <span className="text-2xl">💎</span>
+                    <h3 className="text-xl sm:text-2xl font-bold text-white">成为代理</h3>
+                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20 font-semibold">限时开放</span>
+                  </div>
+                  <p className="text-sm text-neutral-400 mb-6">一次性充值 ¥3,000 即可升级代理，享受全站 6 折拿货及专属权益</p>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-6">
+                    {[
+                      { icon: '💰', text: '全站商品 6 折拿货价' },
+                      { icon: '📊', text: '独立代理后台与数据看板' },
+                      { icon: '🔗', text: '专属推荐链接，享 20% 返佣' },
+                      { icon: '🎯', text: '优先节点分配，保障库存' },
+                      { icon: '🛠️', text: '专属技术支持与运维指导' },
+                      { icon: '💬', text: '7×24 专属客服通道' },
+                    ].map(item => (
+                      <div key={item.text} className="flex items-center gap-2 text-sm text-neutral-300">
+                        <span>{item.icon}</span>
+                        <span>{item.text}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="shrink-0 text-center lg:text-right">
+                  <div className="mb-3">
+                    <span className="text-xs text-neutral-500">一次性充值</span>
+                    <div className="text-4xl font-extrabold text-white mt-1">¥3,000</div>
+                  </div>
+                  <p className="text-xs text-neutral-500 mb-4">开通代理资格，长期有效</p>
+                  <button
+                    onClick={() => onViewChange('profile')}
+                    className="px-8 py-3 bg-amber-500 hover:bg-amber-600 text-black rounded-xl text-base font-bold transition-all duration-200 active:scale-95 shadow-lg shadow-amber-500/20"
+                  >
+                    立即加入
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+      )}
+
       {/* 为什么选择我们 */}
       <section className="border-t border-white/[0.04] py-16 sm:py-24">
         <div className="max-w-6xl mx-auto px-4 sm:px-6">
