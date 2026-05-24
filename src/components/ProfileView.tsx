@@ -179,7 +179,7 @@ export default function ProfileView({ user, token }: ProfileViewProps) {
           <div className="bg-[#0A0A0A] p-5 sm:p-6">
             <div className="flex items-center justify-between mb-1">
               <span className="text-[10px] text-neutral-500">📊 佣金</span>
-              {user.commissionBalance >= parseFloat(withdrawMin) && (
+              {user.commissionBalance > 0 && (
                 <button onClick={() => setWithdrawModal(true)}
                   className="text-[10px] text-amber-400 hover:text-amber-300 bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20 transition">
                   提现
@@ -406,7 +406,12 @@ export default function ProfileView({ user, token }: ProfileViewProps) {
           <div className="bg-[#0a0b0d] border border-white/[0.08] w-full max-w-sm rounded-2xl p-6 shadow-2xl"
             onClick={e => e.stopPropagation()}>
             <h3 className="text-lg font-bold text-white mb-1">佣金提现</h3>
-            <p className="text-xs text-neutral-500 mb-5">最低提现金额 <span className="text-amber-400 font-semibold">¥{withdrawMin}</span></p>
+            <p className="text-xs text-neutral-500 mb-5">
+              最低提现金额 <span className="text-amber-400 font-semibold">¥{withdrawMin}</span>
+              {user.commissionBalance < parseFloat(withdrawMin) && (
+                <span className="text-red-400 ml-2">· 当前佣金不足，无法提现</span>
+              )}
+            </p>
 
             <div className="space-y-3">
               <input
