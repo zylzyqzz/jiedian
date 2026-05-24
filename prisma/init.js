@@ -34,7 +34,7 @@ async function ensureAdmin() {
 
 async function ensureProducts() {
   // 每个产品的分类映射
-  const PRODUCT_CATEGORIES: Record<string, 'LIVE' | 'NON_LIVE'> = {
+  const PRODUCT_CATEGORIES = {
     '新加坡高速节点': 'LIVE',
     '日本东京精品线路': 'LIVE',
     '美国洛杉矶 CN2 GIA': 'NON_LIVE',
