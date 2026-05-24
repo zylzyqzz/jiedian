@@ -36,6 +36,7 @@ export default function HomeView({ user, token, onViewChange }: HomeViewProps) {
   const gridRef = useRef<HTMLDivElement>(null);
   const [showDetail, setShowDetail] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [siteIntro, setSiteIntro] = useState('');
 
   /* ---- 支付方式选择 ---- */
   const [showPaySelect, setShowPaySelect] = useState(false);
@@ -43,6 +44,13 @@ export default function HomeView({ user, token, onViewChange }: HomeViewProps) {
 
   /* ---- 分类筛选 ---- */
   const [category, setCategory] = useState<ProductCategory | 'ALL'>('ALL');
+
+  /* ---- 加载站点设置 ---- */
+  useEffect(() => {
+    fetch('/api/settings').then(r => r.json()).then(d => {
+      if (d.success && d.data.siteIntro) setSiteIntro(d.data.siteIntro);
+    }).catch(() => {});
+  }, []);
 
   const fetchProducts = useCallback(async () => {
     const url = category === 'ALL' ? '/api/products' : `/api/products?category=${category}`;
@@ -130,6 +138,21 @@ export default function HomeView({ user, token, onViewChange }: HomeViewProps) {
         .card-reveal.revealed { opacity:1; transform:translateY(0); }
         .hover-glow:hover { box-shadow: 0 0 30px -8px rgba(255,255,255,.08); }
       `}</style>
+
+      {/* 公司简介 */}
+      {(siteIntro || true) && (
+        <div className="card-reveal bg-gradient-to-br from-blue-500/5 via-purple-500/5 to-transparent border border-blue-500/10 rounded-2xl p-5 sm:p-6 mb-6">
+          <div className="flex items-start gap-3">
+            <span className="text-xl shrink-0 mt-0.5">✦</span>
+            <div>
+              <h2 className="text-base sm:text-lg font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">维度光年科技</h2>
+              <p className="text-xs sm:text-sm text-neutral-400 leading-relaxed mt-2">
+                {siteIntro || '维度光年科技致力于解决电商外贸传媒直播行业真实性问题以及网络账号体现等全流程服务'}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* 页面标题 */}
       <div className="card-reveal mb-6">

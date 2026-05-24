@@ -163,6 +163,22 @@ async function main() {
   console.log('   子代理:  subagent01 / sub123 / 安全码 sub666');
   console.log('   用户:    demo / demo123 / 安全码 demo666');
   console.log('   封禁用户: banned_user / banned123');
+  // 站点设置
+  console.log('⚙️ 初始化站点设置...');
+  const defaultSettings = [
+    { key: 'siteIntro', value: '维度光年科技致力于解决电商外贸传媒直播行业真实性问题以及网络账号体现等全流程服务' },
+    { key: 'siteName', value: 'NodeHub' },
+    { key: 'footerText', value: '© 2026 维度光年科技. All rights reserved.' },
+  ];
+  for (const s of defaultSettings) {
+    await prisma.siteSetting.upsert({
+      where: { key: s.key },
+      update: { value: s.value },
+      create: { key: s.key, value: s.value },
+    });
+  }
+  console.log('  ✅ 站点设置已初始化');
+
   console.log(`   节点池:  共 ${nodeSpecs.reduce((s, n) => s + n.nodes.length, 0)} 个节点实例`);
 }
 

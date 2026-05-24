@@ -6,6 +6,7 @@ import AdminProducts from '@/components/admin/AdminProducts';
 import AdminPayment from '@/components/admin/AdminPayment';
 import AdminUsers from '@/components/admin/AdminUsers';
 import AdminNodes from '@/components/admin/AdminNodes';
+import AdminSettings from '@/components/admin/AdminSettings';
 
 interface AdminViewProps {
   token: string;
@@ -16,7 +17,7 @@ const api = (token: string) => ({
 });
 
 export default function AdminView({ token }: AdminViewProps) {
-  const [tab, setTab] = useState<'dashboard' | 'products' | 'payment' | 'users' | 'nodes'>('dashboard');
+  const [tab, setTab] = useState<'dashboard' | 'products' | 'payment' | 'users' | 'nodes' | 'settings'>('dashboard');
 
   /* ========== 看板 ========== */
   const [dashboard, setDashboard] = useState<any>(null);
@@ -103,6 +104,7 @@ export default function AdminView({ token }: AdminViewProps) {
           { key: 'payment' as const, label: '支付配置' },
           { key: 'users' as const, label: '用户管理' },
           { key: 'nodes' as const, label: '节点管理' },
+          { key: 'settings' as const, label: '⚙️ 站点设置' },
         ].map(t => (
           <button key={t.key} onClick={() => setTab(t.key)}
             className={`px-4 py-2 rounded-xl text-xs font-semibold transition ${tab === t.key ? 'bg-white text-black' : 'border border-white/10 text-neutral-400 hover:text-white'}`}>
@@ -150,6 +152,10 @@ export default function AdminView({ token }: AdminViewProps) {
           onPageChange={setNodePage}
           onRefresh={fetchNodes}
         />
+      )}
+
+      {tab === 'settings' && (
+        <AdminSettings token={token} />
       )}
     </div>
   );

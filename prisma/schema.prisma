@@ -107,3 +107,10 @@ model PaymentConfig {
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 }
+
+model SiteSetting {
+  id        String   @id @default(uuid())
+  key       String   @unique
+  value     String
+  updatedAt DateTime @updatedAt
+}
