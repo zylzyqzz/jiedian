@@ -214,13 +214,26 @@ export default function HomeView({ user, token, onViewChange }: HomeViewProps) {
                       : 'bg-gradient-to-r from-blue-500 via-cyan-500 to-blue-500'
                   }`} />
 
+                  {p.image && (
+                    <div className="relative h-44 overflow-hidden bg-neutral-900">
+                      <img src={p.image} alt={p.title} loading="lazy"
+                        className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
+                      <div className="absolute inset-0 bg-gradient-to-t from-[#0a0b0d] via-transparent to-transparent" />
+                      {i === 1 && (
+                        <span className="absolute top-3 right-3 text-[10px] font-bold px-2.5 py-1 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 backdrop-blur-sm">
+                          最受欢迎
+                        </span>
+                      )}
+                    </div>
+                  )}
+
                   <div className="p-6 sm:p-7">
                     <div className="flex items-start justify-between gap-3 mb-5">
                       <div className="min-w-0">
                         <h3 className="text-lg font-bold text-white group-hover:text-blue-400 transition-colors truncate">{p.title}</h3>
                         <p className="text-sm text-neutral-500 mt-1.5 line-clamp-2 leading-relaxed">{p.description}</p>
                       </div>
-                      {i === 1 && (
+                      {!p.image && i === 1 && (
                         <span className="shrink-0 text-[10px] font-bold px-2.5 py-1 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/20">
                           最受欢迎
                         </span>
