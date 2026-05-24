@@ -27,7 +27,7 @@ export const rechargeSchema = z.object({
 export const productCreateSchema = z.object({
   title: z.string().min(1, '商品名不能为空').max(100),
   description: z.string().max(1000).default(''),
-  image: z.string().max(500).default(''),
+  image: z.string().max(500000).default(''),
   price: z.number().positive('零售价必须为正数'),
   agentPrice: z.number().positive('代理价必须为正数'),
   category: z.enum(['LIVE', 'NON_LIVE']).default('LIVE'),
@@ -37,7 +37,7 @@ export const productUpdateSchema = z.object({
   id: z.string().uuid('无效的商品ID'),
   title: z.string().min(1).max(100),
   description: z.string().max(1000).optional(),
-  image: z.string().max(500).optional(),
+  image: z.string().max(500000).optional(),
   price: z.number().positive(),
   agentPrice: z.number().positive(),
   category: z.enum(['LIVE', 'NON_LIVE']).optional(),
